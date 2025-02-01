@@ -1,5 +1,5 @@
 ---
-title: "Test1"
+title: "Week_1_Assignment-Data_608"
 author: "Mubashira Qari"
 date: "2024-12-21"
 output: html_document
@@ -13,12 +13,24 @@ library(readxl)
 library(ggplot2)
 library(dplyr)
 ```
+
+
 ```{r}
+funding_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/IIJA%20FUNDING%20AS%20OF%20MARCH%202023.csv")
+
 
 ```
 
 
+### View the First Few Rows of Data
 ```{r}
 
+head(funding_data)
 ```
+
+```{r}
+# Check column names
+colnames(funding_data)
+```
+
 
