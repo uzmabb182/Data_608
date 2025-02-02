@@ -18,7 +18,9 @@ library(dplyr)
 ```{r}
 funding_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/IIJA%20FUNDING%20AS%20OF%20MARCH%202023.csv")
 
+state_pop_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/state-population.csv")
 
+territoty_pop_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/state-population-territory.csv")
 ```
 
 
@@ -32,5 +34,14 @@ head(funding_data)
 # Check column names
 colnames(funding_data)
 ```
+```{r}
+head(state_pop_data)
+```
+
+
+```{r}
+head(territoty_pop_data)
+```
+
 
 
