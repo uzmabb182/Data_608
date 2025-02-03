@@ -8,40 +8,492 @@ output: html_document
 ### Load Libraries
 
 ```{r}
+
 library(tidyverse)
 library(readxl)
 library(ggplot2)
 library(dplyr)
+library(stringr)
+library(tools)
+library(stringdist)
+
 ```
 
 
 ```{r}
-funding_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/IIJA%20FUNDING%20AS%20OF%20MARCH%202023.csv")
 
-state_pop_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/state-population.csv")
+IIJA_funding_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/IIJA%20FUNDING%20AS%20OF%20MARCH%202023.csv")
 
-territoty_pop_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/state-population-territory.csv")
+state_population_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/State_Population_Data.csv")
+
+
+election_results_2020_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/2020_Presidential_Election_Results.csv")
+
 ```
 
 
 ### View the First Few Rows of Data
 ```{r}
 
-head(funding_data)
+print(IIJA_funding_data)
+
 ```
 
 ```{r}
+
 # Check column names
-colnames(funding_data)
+colnames(IIJA_funding_data)
+
 ```
+
 ```{r}
-head(state_pop_data)
+# Renaming the columns
+
+IIJA_funding_data <- IIJA_funding_data %>%
+  rename(State_Name = State..Teritory.or.Tribal.Nation, Funding_Billions = Total..Billions.)
+
+print(IIJA_funding_data)
 ```
 
 
 ```{r}
-head(territoty_pop_data)
+
+# Convert column names to lowercase
+colnames(IIJA_funding_data ) <- tolower(colnames(IIJA_funding_data ))
+
+# View the modified data frame
+print(IIJA_funding_data )
+
 ```
+
+
+```{r}
+# Sort by population (ascending order)
+IIJA_funding_data <- IIJA_funding_data[order(IIJA_funding_data$state_name),]
+
+# View the sorted dataframe
+print(IIJA_funding_data)
+
+```
+
+
+```{r}
+
+# Replace "Deleware" with "Delaware" conditionally
+IIJA_funding_data$state_name[IIJA_funding_data$state_name == "Deleware"] <- "Delaware"
+
+# View the updated DataFrame
+print(IIJA_funding_data)
+
+```
+
+```{r}
+
+```
+
+
+
+```{r}
+
+# Add index column using mutate
+IIJA_funding_data <- IIJA_funding_data %>% mutate(index = row_number())
+
+# View the updated DataFrame
+print(IIJA_funding_data)
+
+```
+
+```{r}
+
+# Convert first letter of each word to uppercase using str_to_title
+IIJA_funding_data$state_name <- str_to_title(IIJA_funding_data$state_name)
+
+# View the updated DataFrame
+print(IIJA_funding_data)
+
+
+```
+
+
+
+```{r}
+
+# Convert column names to lowercase
+colnames(state_population_data ) <- tolower(colnames(state_population_data ))
+
+# View the modified data frame
+print(state_population_data)
+
+```
+
+
+```{r}
+# Sort by population (ascending order)
+state_population_data <- state_population_data[order(state_population_data$name),]
+
+# View the sorted dataframe
+print(state_population_data)
+
+```
+
+```{r}
+
+
+# Convert first letter of each word to uppercase using str_to_title
+state_population_data$name <- str_to_title(state_population_data$name)
+
+# View the updated DataFrame
+print(state_population_data)
+
+```
+
+
+
+```{r}
+
+# Convert column names to lowercase
+colnames(election_results_2020_data ) <- tolower(colnames(election_results_2020_data ))
+
+# View the modified data frame
+print(election_results_2020_data)
+
+```
+
+```{r}
+
+
+# Convert first letter of each word to uppercase using str_to_title
+election_results_2020_data$state <- str_to_title(election_results_2020_data$state)
+
+# View the updated DataFrame
+print(election_results_2020_data)
+
+```
+
+
+```{r}
+
+# Checking datatypes
+#str(IIJA_funding_data)
+
+#str(election_results_2020_data)
+
+str(state_population_data)
+
+```
+
+
+
+
+```{r}
+
+# Convert 'state' column from integer to character
+state_population_data$name <- as.character(state_population_data$name)
+
+str(state_population_data)
+
+```
+
+
+
+
+
+```{r}
+
+# Merge on 'state_name' from df1 and 'state' from df2
+result_df <- merge(IIJA_funding_data, state_population_data, by.x = "state_name", by.y = "name")
+
+# View the merged dataframe
+print(result_df)
+
+```
+
+
+```{r}
+
+
+# Merge on 'state_name' from df1 and 'state' from df2
+result_df <- merge(IIJA_funding_data, state_population_data, by.x = "state_name", by.y = "name")
+
+# View the merged dataframe
+print(result_df)
+
+```
+
+
+
+```{r}
+
+
+# Merge on 'state_name' from df1 and 'state' from df2
+merged_df <- merge(result_df, election_results_2020_data, by.x = "state_name", by.y = "state")
+
+# View the merged dataframe
+print(merged_df)
+
+
+```
+
+
+
+
+```{r}
+
+# Select specific columns
+new_df <- merged_df %>% select(state_name, funding_billions, popestimate2020, trump_win, biden_win)
+
+# View the new data frame
+print(new_df)
+
+```
+
+
+### Create Key Metrics for Analysis
+
+### Funding Per state percentage
+
+```{r}
+# Add a new column
+new_df <- new_df %>%
+  mutate(funding_per_state_percentage = round((funding_billions / sum(funding_billions)) * 100, 2))
+
+# Print the merged data frame
+print(new_df)
+
+```
+
+
+```{r}
+
+# Add a new column
+new_df <- new_df %>%
+  mutate(population_per_state_percentage = round((popestimate2020 / sum(popestimate2020)) * 100, 2))
+
+# Print the merged data frame
+print(new_df)
+
+
+```
+
+
+```{r}
+
+# Add a new columns for testing criteria
+new_df <- new_df %>%
+  mutate(population_per_state_plus5percent = population_per_state_percentage + (population_per_state_percentage * 0.05))
+
+
+new_df <- new_df %>%
+  mutate(population_per_state_minus5percent = population_per_state_percentage - (population_per_state_percentage * 0.05))
+
+new_df <- new_df %>%
+  mutate(Equitable = ifelse(funding_per_state_percentage > population_per_state_minus5percent & 
+                            funding_per_state_percentage < population_per_state_plus5percent, 
+                            "Yes", "No"))
+
+new_df <- new_df %>%
+  mutate(bias = ifelse(Equitable == "No", "Yes", "No"))
+
+# Print the merged data frame
+print(new_df)
+
+```
+### Is the Allocation Equitable Based on Population?
+
+### Funding Allocation vs. Population
+
+This chart compares funding per state percentage to population per state percentage. If funding is fair, bars should align with the population.
+
+```{r}
+ggplot(new_df, aes(x = reorder(state_name, population_per_state_percentage), 
+                   y = funding_per_state_percentage, 
+                   fill = Equitable)) +
+  geom_bar(stat = "identity") +
+  coord_flip() +
+  scale_fill_manual(values = c("Yes" = "blue", "No" = "red")) +
+  labs(title = "Funding Allocation vs. Population Percentage",
+       x = "State",
+       y = "Funding Percentage",
+       fill = "Equitable") +
+  theme_minimal()
+
+```
+Interpretation:
+
+Blue bars ("Yes") → States where funding aligns with population.
+
+Red bars ("No") → States overfunded or underfunded, indicating bias.
+
+If many states are red, the allocation is not equitable.
+
+### Funding vs. Population Percentage
+
+If funding is fair, points should align in a linear trend.
+
+```{r}
+
+ggplot(new_df, aes(x = population_per_state_percentage, 
+                   y = funding_per_state_percentage, 
+                   color = Equitable)) +
+  geom_point(size = 4, alpha = 0.7) +
+  geom_smooth(method = "lm", color = "black", linetype = "dashed") +
+  scale_color_manual(values = c("Yes" = "blue", "No" = "red")) +
+  labs(title = "Funding Allocation vs. Population Percentage",
+       x = "Population Percentage",
+       y = "Funding Percentage",
+       color = "Equitable") +
+  theme_minimal()
+
+
+```
+
+Interpretation:
+
+A strong trend line suggests fair allocation.
+
+Scattered points with many "No" (Red) indicate funding was not proportional.
+
+This visualizes bias more clearly than the bar chart.
+
+### Does Allocation Favor the Biden Administration?
+
+### Funding vs. Biden Vote Share
+
+If Democratic states receive more funding, the trend line will be upward-sloping.
+
+```{r}
+
+ggplot(new_df, aes(x = as.numeric(biden_win), 
+                   y = funding_per_state_percentage, 
+                   color = bias)) +
+  geom_point(size = 4, alpha = 0.7) +
+  geom_smooth(method = "lm", color = "black", linetype = "dashed") +
+  scale_color_manual(values = c("Yes" = "red", "No" = "blue")) +
+  labs(title = "Bias in Funding Allocation vs. Biden Vote",
+       x = "Biden Win (1 = Won, 0 = Lost)",
+       y = "Funding Percentage",
+       color = "Bias") +
+  theme_minimal()
+
+
+```
+
+Interpretation:
+
+Upward slope → Biden-won states received more funding.
+
+No slope → Funding was politically neutral.
+
+If most red points (bias) are above, funding favored Biden states.
+
+### Funding by Political Lean
+
+If Biden-won states received higher funding, the blue box will be taller.
+
+
+```{r}
+
+ggplot(new_df, aes(x = factor(biden_win), 
+                   y = funding_per_state_percentage, 
+                   fill = factor(biden_win))) +
+  geom_boxplot() +
+  scale_fill_manual(values = c("0" = "red", "1" = "blue")) +
+  labs(title = "Funding Allocation by Political Lean",
+       x = "Biden Win (1 = Won, 0 = Lost)",
+       y = "Funding Percentage",
+       fill = "Biden Win") +
+  theme_minimal()
+
+```
+
+Interpretation:
+
+If the blue box (Biden states) is higher, funding favored Democrats.
+
+If both boxes are similar, funding was neutral.
+
+Outliers in red box may indicate some Republican states were underfunded.
+
+Conclusion
+
+1- Was allocation equitable?
+The bar chart & scatter plot show many states in red ("No"), proving funding was not proportional to population.
+Some states received far more or far less than expected, suggesting bias or inefficiencies.
+
+2️- Was there political bias?
+The scatter plot & boxplot show that Democratic states received more funding than Republican states.
+This suggests possible favoritism toward the Biden administration.
+
+ Final Verdict: Allocation was not equitable and appears to favor Democratic-leaning states.
+
+
+```{r}
+
+# Define the file path with filename and extension
+file_path <- "C:/Users/Uzma/Downloads/new_df.csv"
+
+# Write dataframe to CSV
+write.csv(new_df, file = file_path, row.names = FALSE)
+
+# Confirm that the file was saved
+print("File saved successfully!")
+
+```
+
+```{r}
+# Select specific columns
+group_df <- new_df %>% select(state_name, funding_billions, popestimate2020, trump_win, biden_win)
+
+# View the new data frame
+print(group_df)
+
+```
+
+
+
+```{r}
+
+# Calculate total funding and population
+total_funding <- sum(group_df$funding_billions, na.rm = TRUE)
+total_population <- sum(group_df$popestimate2020, na.rm = TRUE)
+
+# Create a new table with grouped states and percentages
+grouped_table <- group_df %>%
+  group_by(trump_win, biden_win) %>%
+  summarize(
+    trump_funding_percentage = round(sum(ifelse(trump_win == 1, funding_billions, 0), na.rm = TRUE) / total_funding * 100, 2),
+    biden_funding_percentage = round(sum(ifelse(biden_win == 1, funding_billions, 0), na.rm = TRUE) / total_funding * 100, 2),
+    trump_population_percentage = round(sum(ifelse(trump_win == 1, popestimate2020, 0), na.rm = TRUE) / total_population * 100, 2),
+    biden_population_percentage = round(sum(ifelse(biden_win == 1, popestimate2020, 0), na.rm = TRUE) / total_population * 100, 2)
+  ) %>%
+  ungroup()
+
+# Print the new grouped table with rounded percentages
+print(grouped_table)
+
+```
+
+
+```{r}
+
+# Define the file path with filename and extension
+file_path <- "C:/Users/Uzma/Downloads/grouped_table.csv"
+
+# Write dataframe to CSV
+write.csv(grouped_table, file = file_path, row.names = FALSE)
+
+# Confirm that the file was saved
+print("File saved successfully!")
+
+```
+
+
+```{r}
+
+
+
+```
+
 
 
 
