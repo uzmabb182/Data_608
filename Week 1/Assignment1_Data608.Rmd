@@ -590,6 +590,7 @@ ggplot(grouped_table, aes(x = trump_population_percentage, y = trump_funding_per
 
 ```
 
+
 ### Storyboard (Sequential List of Phrases)
 
 ### Introduction – The Funding Question: The U.S. government allocated billions in infrastructure funding—was it distributed fairly across states?

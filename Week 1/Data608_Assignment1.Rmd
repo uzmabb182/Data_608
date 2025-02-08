@@ -1,8 +1,8 @@
 ---
-title: "Assignment1_Data608"
+title: "Data608_Assignment1"
 author: "Mubashira Qari"
 date: "2025-02-08"
-output: powerpoint_presentation
+output: html_document
 ---
 
 
@@ -158,7 +158,7 @@ state_population_data <- state_population_data[order(state_population_data$name)
 
 # View the sorted dataframe
 #print(state_population_data)
-head(state_population_data)
+#head(state_population_data)
 ```
 
 
@@ -171,7 +171,7 @@ state_population_data$name <- str_to_title(state_population_data$name)
 
 # View the updated DataFrame
 #print(state_population_data)
-head(state_population_data)
+#head(state_population_data)
 ```
 
 
@@ -228,7 +228,7 @@ result_df <- merge(IIJA_funding_data, state_population_data, by.x = "state_name"
 
 # View the merged dataframe
 #print(result_df)
-head(result_df)
+#head(result_df)
 ```
 
 
@@ -240,7 +240,7 @@ result_df <- merge(IIJA_funding_data, state_population_data, by.x = "state_name"
 
 # View the merged dataframe
 #print(result_df)
-head(result_df)
+#head(result_df)
 ```
 
 
@@ -253,7 +253,7 @@ merged_df <- merge(result_df, election_results_2020_data, by.x = "state_name", b
 
 # View the merged dataframe
 #print(merged_df)
-head(merged_df)
+#head(merged_df)
 
 ```
 
@@ -398,6 +398,7 @@ ggplot(new_df, aes(x = reorder(state_name, population_per_state_percentage),
   theme_minimal()
 
 ```
+
 
 
 Interpretation:
@@ -589,6 +590,7 @@ ggplot(grouped_table, aes(x = trump_population_percentage, y = trump_funding_per
   theme_minimal()
 
 ```
+
 
 ### Storyboard (Sequential List of Phrases)
 
