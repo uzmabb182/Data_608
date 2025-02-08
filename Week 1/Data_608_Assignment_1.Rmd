@@ -1,4 +1,11 @@
 ---
+title: "Assignment_1_Data_608"
+author: "Mubashira Qari"
+date: "2025-02-08"
+output: ioslides_presentation
+---
+
+---
 title: "Week_1_Assignment-Data_608"
 author: "Mubashira Qari"
 date: "2024-12-21"
@@ -41,12 +48,14 @@ election_results_2020_data <- read.csv("https://raw.githubusercontent.com/uzmabb
 
 ```
 
+
 ```{r}
 
 # Check column names
 colnames(IIJA_funding_data)
 
 ```
+
 
 ```{r}
 # Renaming the columns
@@ -562,6 +571,26 @@ ggplot(grouped_table, aes(x = trump_population_percentage, y = trump_funding_per
   theme_minimal()
 
 ```
+
+### Storyboard (Sequential List of Phrases)
+
+### Introduction – The Funding Question: The U.S. government allocated billions in infrastructure funding—was it distributed fairly across states?
+
+### Data Collection & Analysis: We examined funding allocation, state populations, and 2020 election results to assess fairness.
+
+### Key Finding – Inequitable Distribution: About 80% of states received funding disproportionate to their population size.
+
+### Bias Investigation: Did Biden-won states receive more funding than Trump-won states?
+
+### Final Conclusion: The analysis shows no strong bias toward Biden states; inequities exist, but they don’t follow a clear political pattern.
+
+### 3-Minute Story (One Paragraph)
+
+When the U.S. government passed the Infrastructure Investment and Jobs Act (IIJA), it promised to distribute funding fairly to support all states. However, was this promise kept? By analyzing funding allocations alongside state populations and election results, we discovered that about 80% of states received either more or less than their fair share based on population. To investigate potential bias, we checked whether Biden-won states received disproportionately higher funding. The results? While the distribution was inequitable, there was no clear pattern favoring Democratic states—both Republican and Democratic states experienced funding disparities. This suggests that funding decisions may be influenced by other factors beyond politics, such as infrastructure needs or economic priorities.
+
+### Big Idea Summary (One Sentence)
+
+The federal infrastructure funding distribution was inequitable, but no clear political bias was found in favor of Biden-won states.
 
 
 
