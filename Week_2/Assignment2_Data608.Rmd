@@ -50,11 +50,11 @@ library(skimr)
 
 ```{r}
 
-unemployment_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%202/unemployment_rate.csv")
+unemployment_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_2/unemployment_rate.csv")
 
-fed_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%202/fed_fund_rate.csv")
+fed_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_2/fed_fund_rate.csv")
 
-cpi_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%202/consumer_price_index.csv")
+cpi_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_2/consumer_price_index.csv")
 
 #print(unemployment_data)
 #print(fed_data)
@@ -64,49 +64,49 @@ print(cpi_data)
 ### Convert wide format to long format
 
 ```{r}
-df_long <- cpi_data %>%
-  pivot_longer(cols = -Year, names_to = "Month", values_to = "CPI") %>%
-  filter(!Month %in% c("HALF1", "HALF2"))  # Removing Half-year summary columns if present
+
+cpi_df <- cpi_data[, !(names(cpi_data) %in% c("HALF1", "HALF2"))]
+
 ```
 
 ### Ordering Month Names
 
 ```{r}
-df_long$Month <- factor(df_long$Month, levels = c("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-                                                   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"))
-```
-
-### Arrange by Year and Month
-
-```{r}
-df_long <- df_long %>%
-  arrange(Year, Month)
-```
-
-### Calculate % change in CPI from the previous month
-
-```{r}
-df_long <- df_long %>%
-  group_by(Year) %>%
-  mutate(interest_rate = ((CPI - lag(CPI)) / lag(CPI)) * 100) %>%
-  ungroup()
-
-cpi_df <- df_long
-cpi_df
+cpi_long <- reshape(cpi_df, 
+                    varying = list(2:ncol(cpi_df)),  # All columns except "Year"
+                    v.names = "CPI",  # New column name for CPI values
+                    timevar = "Month",  # New column for Month names
+                    times = names(cpi_df)[2:ncol(cpi_df)],  # Month names from column names
+                    idvar = "Year",  # Keep Year column as identifier
+                    direction = "long")
+cpi_long
 ```
 
 
 ```{r}
 # Define the file path with filename and extension
-file_path <- "C:/Users/Uzma/Downloads/new_df.csv"
-
+#file_path <- "C:/Users/Uzma/Downloads/new_df.csv"
+file_path <- "C:/Users/Uzma/CUNY-SPS-Assignments/Data_608/Week_2/processed_interest_rates.csv"
 # Write dataframe to CSV
-write.csv(df_long, file = file_path, row.names = FALSE)
+write.csv(cpi_long, file = file_path, row.names = FALSE)
 
 # Confirm that the file was saved
 print("File saved successfully!")
+cpi_long
 
 ```
+
+```{r}
+cpi_df <- cpi_long %>%
+  group_by(Month) %>%  # Group by month to ensure comparisons are within the same month
+  mutate(`inflation_rate` = round(((CPI - lag(CPI)) / lag(CPI)) * 100, 2)) %>%
+  ungroup()
+
+cpi_df
+```
+
+
+
 ```{r}
 fed_data
 ```
@@ -121,6 +121,7 @@ fed_data <- fed_data %>%
 
 fed_df <- fed_data
 fed_df
+
 ```
 ### Extract Year and Month
 
@@ -131,19 +132,7 @@ fed_df <- fed_df %>%
 
 fed_df
 ```
-### Select and arrange final columns
 
-```{r}
-library(tidyverse)
-library(lubridate)
-
-fed_df <- fed_df %>%
-  select(Year, Month, fed_fund_rate) %>%
-  arrange(Year, Month)
-
-fed_df
-
-```
 ### Creating Dataframe for Unemployment Rate dataset
 
 ```{r}
