@@ -2,7 +2,9 @@
 title: "Assignment2_Data608"
 author: "Mubashira Qari"
 date: "2025-02-16"
-output: powerpoint_presentation
+output:
+  slidy_presentation: default
+  powerpoint_presentation: default
 ---
 
 ### Load Libraries
@@ -61,7 +63,7 @@ cpi_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/
 print(cpi_data)
 ```
 
-### Convert wide format to long format
+### Remove the HALF1 and HALF2 columns
 
 ```{r}
 
@@ -69,7 +71,7 @@ cpi_df <- cpi_data[, !(names(cpi_data) %in% c("HALF1", "HALF2"))]
 
 ```
 
-### Ordering Month Names
+### Convert from wide format to long format using `reshape()`
 
 ```{r}
 cpi_long <- reshape(cpi_df, 
@@ -81,12 +83,12 @@ cpi_long <- reshape(cpi_df,
                     direction = "long")
 cpi_long
 ```
-
+### Saving as CSV
 
 ```{r}
 # Define the file path with filename and extension
 #file_path <- "C:/Users/Uzma/Downloads/new_df.csv"
-file_path <- "C:/Users/Uzma/CUNY-SPS-Assignments/Data_608/Week_2/processed_interest_rates.csv"
+file_path <- "C:/Users/Uzma/CUNY-SPS-Assignments/Data_608/output_csv/processed_interest_rates.csv"
 # Write dataframe to CSV
 write.csv(cpi_long, file = file_path, row.names = FALSE)
 
@@ -95,6 +97,8 @@ print("File saved successfully!")
 cpi_long
 
 ```
+
+### Calculate percentage change and round to 2 decimal places
 
 ```{r}
 cpi_df <- cpi_long %>%
@@ -106,6 +110,44 @@ cpi_df
 ```
 
 
+### Create a new column 'Status' based on 'inflation_rate'
+
+```{r}
+
+cpi_df <- cpi_df %>%
+  mutate(inflation_criteria = ifelse(inflation_rate > 2, "Not Achieved", "Achieved"))
+
+cpi_df
+
+```
+
+### Remove rows where Year is 1999
+
+```{r}
+
+cpi_df <- cpi_df %>%
+  filter(Year != 1999)  # Keep only rows where Year is NOT 1999
+
+cpi_df
+
+```
+
+### Saving as CSV
+
+```{r}
+# Define the file path with filename and extension
+#file_path <- "C:/Users/Uzma/Downloads/new_df.csv"
+file_path <- "C:/Users/Uzma/CUNY-SPS-Assignments/Data_608/output_csv/inflation_rates.csv"
+# Write dataframe to CSV
+write.csv(cpi_df, file = file_path, row.names = FALSE)
+
+# Confirm that the file was saved
+print("File saved successfully!")
+cpi_df
+
+```
+
+### Preparing FED Dataset
 
 ```{r}
 fed_data
@@ -133,6 +175,23 @@ fed_df <- fed_df %>%
 fed_df
 ```
 
+### Saving as CSV
+
+```{r}
+# Define the file path with filename and extension
+#file_path <- "C:/Users/Uzma/Downloads/new_df.csv"
+file_path <- "C:/Users/Uzma/CUNY-SPS-Assignments/Data_608/output_csv/fed_rates.csv"
+# Write dataframe to CSV
+write.csv(fed_df, file = file_path, row.names = FALSE)
+
+# Confirm that the file was saved
+print("File saved successfully!")
+
+
+```
+
+
+
 ### Creating Dataframe for Unemployment Rate dataset
 
 ```{r}
@@ -155,5 +214,246 @@ unemp_df <- unemp_df %>%
   arrange(Year, Month, unemployment_rate)
 
 unemp_df
+
+```
+### Create a new column 'Status' based on 'unemployment_rate'
+
+```{r}
+
+unemp_df <- unemp_df %>%
+  mutate(unemp_criteria = ifelse(unemployment_rate > 5, "Not Achieved", "Achieved"))
+
+unemp_df
+
 ```
 
+### Saving as CSV
+
+```{r}
+# Define the file path with filename and extension
+#file_path <- "C:/Users/Uzma/Downloads/new_df.csv"
+file_path <- "C:/Users/Uzma/CUNY-SPS-Assignments/Data_608/output_csv/unemp_rates.csv"
+# Write dataframe to CSV
+write.csv(unemp_df, file = file_path, row.names = FALSE)
+
+# Confirm that the file was saved
+print("File saved successfully!")
+
+
+```
+### Visualizing FED's Mandate Fulfillment
+
+The Federal Reserve (FED) has a dual mandate from Congress:
+
+Stable Prices (Low Inflation) → Inflation rate around 2%
+
+Maximum Employment (Low Unemployment) → Low unemployment (~4% or lower)
+
+### Load Libraries
+
+```{r}
+
+library(ggplot2)  
+library(dplyr)     
+library(readr)     
+library(scales)    
+
+```
+
+### Remove Year 1999
+
+```{r}
+
+unemp_df <- unemp_df %>% filter(Year != 1999)
+cpi_df <- cpi_df %>% filter(Year != 1999)
+fed_df <- fed_df %>% filter(Year != 1999)
+
+```
+
+
+### Data Preparation: Merge All Three Datasets
+
+```{r}
+
+merged_df <- unemp_df %>%
+  inner_join(cpi_df, by = c("Year", "Month")) %>%
+  inner_join(fed_df, by = c("Year", "Month"))
+
+merged_df
+
+```
+### Visualization: Has the FED Fulfilled its Mandate?
+
+### Unemployment, Inflation & Fed Funds Rate Trend
+
+This line chart shows how the unemployment rate, inflation rate, and Fed Funds rate have changed over time.
+
+```{r}
+
+# Create a combined plot with dual y-axes
+ggplot(merged_df, aes(x = as.Date(paste(Year, Month, "1", sep = "-"), "%Y-%b-%d"))) +
+  geom_line(aes(y = unemployment_rate, color = "Unemployment Rate"), size = 1.2) +
+  geom_line(aes(y = inflation_rate, color = "Inflation Rate"), size = 1.2) +
+  geom_line(aes(y = fed_fund_rate, color = "Fed Funds Rate"), size = 1.2, linetype = "dashed") +
+  scale_y_continuous(sec.axis = sec_axis(~., name = "Fed Funds Rate (%)")) +
+  labs(title = "Unemployment & Inflation vs. Fed Funds Rate",
+       x = "Year", 
+       y = "Unemployment & Inflation (%)",
+       color = "Legend") +
+  theme_minimal()
+
+
+```
+### The Federal Reserve System has been given a dual mandate of pursuing the economic goals of maximum employment and price stability with a inflation rate of 2% over time and unemployment rate between 4% and 6% over time
+
+### "Has the FED been able to fulfill the mandate given to it by Congress?"
+
+
+### Unemployment Rate Over Time
+
+```{r}
+ggplot(merged_df, aes(x = as.Date(paste(Year, Month, "1", sep = "-"), "%Y-%b-%d"), y = unemployment_rate)) +
+  geom_line(color = "blue", size = 1.2) +
+  geom_hline(yintercept = 4, linetype = "dashed", color = "red") +
+  labs(title = "Unemployment Rate Over Time",
+       x = "Year", 
+       y = "Unemployment Rate (%)") +
+  theme_minimal()
+
+```
+Interpretation:
+
+A dashed red line at 4% shows the employment mandate
+If unemployment is below 4%, Fed is meeting its employment goal
+
+### Inflation Rate Over Time
+
+```{r}
+
+ggplot(merged_df, aes(x = as.Date(paste(Year, Month, "1", sep = "-"), "%Y-%b-%d"), y = inflation_rate)) +
+  geom_line(color = "green", size = 1.2) +
+  geom_hline(yintercept = 2, linetype = "dashed", color = "red") +
+  labs(title = "Inflation Rate Over Time",
+       x = "Year", 
+       y = "Inflation Rate (%)") +
+  theme_minimal()
+
+```
+Interpretation:
+
+A dashed red line at 2% shows the price stability mandate
+If inflation stays near 2%, Fed is achieving price stability
+
+
+To evaluate whether the Federal Reserve (FED) has met its unemployment mandate, we need to visualize unemployment trends over time and compare them with the "Achieved" vs. "Not Achieved" status.
+
+```{r}
+# Convert Month to numeric and create Date column
+unemp_df <- unemp_df %>%
+  mutate(
+    Month = match(Month, month.abb),  # Convert "Jan" -> 1, "Feb" -> 2
+    Date = as.Date(paste(Year, Month, "1", sep = "-"), format = "%Y-%m-%d"),
+    unemployment_rate = as.numeric(unemployment_rate)  # Ensure numeric
+  )
+
+
+```
+
+
+```{r}
+ggplot(cpi_df, aes(x = factor(Year), fill = inflation_criteria)) +
+  geom_bar(position = "stack") +  
+  scale_fill_manual(values = c("Achieved" = "green", "Not Achieved" = "orange")) +
+  scale_y_continuous(breaks = seq(0, 12, by = 1)) +  # Force whole numbers for months
+  labs(title = "Inflation Mandate Achievement Over the Years",
+       x = "Year",
+       y = "Number of Months",
+       fill = "Mandate Status") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+```
+
+
+
+```{r}
+ggplot(unemp_df, aes(x = factor(Year), fill = unemp_criteria)) +
+  geom_bar(position = "stack") +  
+  scale_fill_manual(values = c("Achieved" = "blue", "Not Achieved" = "pink")) +
+  scale_y_continuous(breaks = seq(0, 12, by = 1)) +  # Ensure y-axis is in whole numbers (0 to 12)
+  labs(title = "Unemployment Mandate Achievement Over the Years",
+       x = "Year",
+       y = "Number of Months",
+       fill = "Mandate Status") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+
+```
+
+### Ensure merged_df is Properly Structured
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(tidyr)
+
+# Ensure the Month column is a character type
+merged_df <- merged_df %>%
+  mutate(Month = as.character(Month))
+
+# Convert to long format for better visualization
+long_df <- merged_df %>%
+  pivot_longer(cols = c(inflation_criteria, unemp_criteria),
+               names_to = "Mandate",
+               values_to = "Status")
+
+# Rename "Mandate" column for clarity
+long_df <- long_df %>%
+  mutate(Mandate = ifelse(Mandate == "inflation_criteria", "Inflation Mandate", "Unemployment Mandate"))
+
+
+
+```
+
+### Create the Stacked Bar Chart
+
+### Now visualizing combined Inflation & Unemployment Mandate Achievements over the years.
+
+```{r}
+
+# Define custom colors for each category
+colors <- c("Inflation Mandate.Achieved" = "green",
+            "Inflation Mandate.Not Achieved" = "orange",
+            "Unemployment Mandate.Achieved" = "green",
+            "Unemployment Mandate.Not Achieved" = "blue")
+
+# Create the stacked bar chart
+ggplot(long_df, aes(x = factor(Year), fill = interaction(Mandate, Status))) +
+  geom_bar(position = "stack") +
+  scale_fill_manual(values = colors) +
+  scale_y_continuous(breaks = seq(0, 24, by = 2)) +  # Ensure whole number scale for months
+  labs(title = "Mandate Achievement Over the Years (Inflation & Unemployment)",
+       x = "Year",
+       y = "Number of Months Achieved",
+       fill = "Mandate Status") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
+
+
+```
+### Explanation of the Visualization
+
+Each Year is on the X-axis.
+
+Y-axis represents months (0–12 per mandate, up to 24 total).
+
+Stacked bars show whether mandates were Achieved or Not Achieved:
+
+Green → Achieved (for both inflation & unemployment)
+Blue → Unemployment Not Achieved
+Orange → Inflation Not Achieved
+
+### Final Outcome
+
+This clearly illustrates how well the FED has met its dual mandate over time, highlighting patterns in inflation and unemployment stability.
