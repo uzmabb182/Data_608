@@ -139,47 +139,16 @@ unemp_df <- unemp_df %>%
 
 ```
 
-```{r, warning=FALSE}
-
-# Remove Year 1999
-library(ggplot2)  
-library(dplyr)     
-library(readr)     
-library(scales) 
-unemp_df <- unemp_df %>% filter(Year != 1999)
-cpi_df <- cpi_df %>% filter(Year != 1999)
-fed_df <- fed_df %>% filter(Year != 1999)
-
-
-# Data Preparation: Merge All Three Datasets
-merged_df <- unemp_df %>%
-  inner_join(cpi_df, by = c("Year", "Month")) %>%
-  inner_join(fed_df, by = c("Year", "Month"))
-
-#merged_df
-
-
-# Creating a Status Field
-merged_df <- merged_df %>%
-  mutate(
-    status = case_when(
-      unemp_criteria == "Achieved" & inflation_criteria == "Achieved" ~ "Yes",
-      unemp_criteria == "Not Achieved" & inflation_criteria == "Not Achieved" ~ "No",
-      TRUE ~ "Partial Achieved"
-    )
-  )
-
-#merged_df
-
-```
-
-
-
 ## Visualizing FED's Mandate Fulfillment {.smaller}
 
 -   The Federal Reserve (FED) has a dual mandate from Congress which according to economist is:
--   Stable Prices (Low Inflation) when Inflation rate is around 2% and maximum Employment (Low Unemployment) when low unemployment is below 5% - 6% 
+-   Stable Prices (Low Inflation) when Inflation rate is around 2% and maximum Employment (Low Unemployment) when low unemployment is below 5% - 6%
 
+## Feature Engineering Criteria for inflation {.smaller}
+
+-   If inflation_rate > (\~2%), it is classified as "Not Achieved" (inflation is too high).
+-   Otherwise, it is classified as "Achieved" (inflation is at or below the target).
+-   This new column inflation_criteria indicates whether the inflation target was met for that period.
 
 ```{r, warning=FALSE}
 # Remove Year 1999
@@ -214,184 +183,96 @@ merged_df <- merged_df %>%
 
 ```
 
+## Feature Engineering Criteria for Unemployment {.smaller}
 
-```{r}
-# Load required libraries
-library(ggplot2)
-library(dplyr)
-library(patchwork) # For combining plots
+-   The unemp_criteria field is based on a threshold that determines whether the unemployment rate is at an acceptable level or too high. The criteria for assigning values to this field are as follows:
+-   Achieved → If the unemployment rate is at or below (\~6%), it is considered within the acceptable range, meaning the economic goal for employment is met.
+-   Not Achieved → If the unemployment rate is above (\~6%), it indicates high unemployment, meaning the target for employment has not been met.
 
-# Load data (if not already loaded) - Replace with actual file path
-# merged_df <- read_csv("your_data.csv")  # Uncomment if loading from file
-
-# Check if `merged_df` exists
-if (!exists("merged_df")) {
-  stop("Error: merged_df not found. Load the dataset before running this code.")
-}
-
-# Convert Year column to Date format (only if necessary)
-if (!inherits(merged_df$Year, "Date")) {
-  merged_df <- merged_df %>%
-    mutate(Year = as.Date(paste0(Year, "-01-01")))  # Assumes Year is a 4-digit number
-}
-
-# Check column names to prevent errors
-if (!all(c("fed_fund_rate", "unemployment_rate") %in% colnames(merged_df))) {
-  stop("Error: One or more required columns are missing from merged_df.")
-}
-
-# Plot 1: Federal Funds Rate Over Time
-p1 <- merged_df %>%
-  ggplot(aes(x = Year, y = fed_fund_rate)) +
-  geom_line(color = "blue", size = 1.2) +
-  theme_minimal(base_size = 16) +
-  theme(panel.grid.minor.x = element_blank(),
-        panel.grid.major.x = element_blank(),
-        plot.background = element_rect(color = NA)) +
-  labs(title = "Federal Funds Rate Over Time", 
-       x = "Year", 
-       y = "Fed Funds Rate (%)") +
-  scale_x_date(date_labels = "%Y", date_breaks = "5 years")  # Improve x-axis readability
-
-#  Plot 2: inflation Rate Over Time
-p2 <- merged_df %>%
-  ggplot(aes(x = Year, y = inflation_rate)) +
-  geom_line(color = "blue", size = 1.2) +
-  theme_minimal(base_size = 16) +
-  theme(panel.grid.minor.x = element_blank(),
-        panel.grid.major.x = element_blank(),
-        plot.background = element_rect(color = NA)) +
-  labs(title = "Inflation Rate Over Time", 
-       x = "Year", 
-       y = "Inflation Rate (%)") +
-  scale_x_date(date_labels = "%Y", date_breaks = "5 years")  # Improve x-axis readability
-
-#  Plot 3: Unemployment Rate Over Time
-p3 <- merged_df %>%
-  ggplot(aes(x = Year, y = unemployment_rate)) +
-  geom_line(color = "blue", size = 1.2) +
-  theme_minimal(base_size = 16) +
-  theme(panel.grid.minor.x = element_blank(),
-        panel.grid.major.x = element_blank(),
-        plot.background = element_rect(color = NA)) +
-  labs(title = "Unemployment Rate Over Time", 
-       x = "Year", 
-       y = "Unemployment Rate (%)") +
-  scale_x_date(date_labels = "%Y", date_breaks = "5 years")  # Improve x-axis readability
-
-# Combine plots using patchwork (Stacked Layout)
-p1 / p2 / p3
-
-```
-
-```{r}
-# Load required libraries
-library(ggplot2)
-library(dplyr)
-library(patchwork) # For combining plots
-
-# Ensure `Year` is in date format (if it's not already)
-if (!inherits(merged_df$Year, "Date")) {
-  merged_df <- merged_df %>%
-    mutate(Year = as.Date(paste0(Year, "-01-01")))  # Assumes Year is a 4-digit number
-}
-
-# Check for missing columns before running plots
-if (!all(c("fed_fund_rate", "inflation_rate", "unemployment_rate") %in% colnames(merged_df))) {
-  stop("Error: One or more required columns are missing from merged_df.")
-}
-
-# Plot 1: Federal Funds Rate (Red)
-p1 <- merged_df %>%
-  ggplot(aes(x = Year, y = fed_fund_rate)) +
-  geom_line(color = "red", size = 1.5) +
-  theme_minimal(base_size = 16) +
-  labs(title = "fed_fund_rate", x = "", y = "") +
-  scale_x_date(date_labels = "%Y", date_breaks = "5 years") +
-  theme(
-    axis.title.y = element_text(angle = 0, vjust = 0.5, hjust = -3),  # Fix y-label positioning
-    plot.margin = margin(10, 10, 10, 20)  # Add space between plots
-  )
-
-# Plot 2: Inflation Rate (Green) with 2% Reference Line
-p2 <- merged_df %>%
-  ggplot(aes(x = Year, y = inflation_rate)) +
-  geom_line(color = "green", size = 1.5) +
-  geom_hline(yintercept = 2, linetype = "dashed", color = "red", size = 1.2) +
-  theme_minimal(base_size = 16) +
-  labs(title = "inflation_rate", x = "", y = "Value (%)") +
-  scale_x_date(date_labels = "%Y", date_breaks = "5 years") +
-  theme(
-    axis.title.y = element_text(angle = 90, vjust = 0.5, hjust = 0.5),  # Keep y-label for Inflation
-    plot.margin = margin(10, 10, 10, 20)  # Add space between plots
-  )
-
-# Plot 3: Unemployment Rate (Blue) with 6% Reference Line
-p3 <- merged_df %>%
-  ggplot(aes(x = Year, y = unemployment_rate)) +
-  geom_line(color = "blue", size = 1.5) +
-  geom_hline(yintercept = 6, linetype = "dashed", color = "red", size = 1.2) +
-  theme_minimal(base_size = 16) +
-  labs(title = "unemployment_rate", x = "Year", y = "") +
-  scale_x_date(date_labels = "%Y", date_breaks = "5 years") +
-  theme(
-    axis.title.y = element_text(angle = 0, vjust = 0.5, hjust = -3),  # Fix y-label positioning
-    plot.margin = margin(10, 10, 10, 20)  # Add space between plots
-  )
-
-# Combine plots using patchwork (Adjusted Heights for Proper Spacing)
-(p1 / p2 / p3) +
-  plot_layout(heights = c(1, 1.2, 1.5)) +  # Adjust height proportions
-  plot_annotation(title = "Economic Indicators Over Time with Criteria Lines")
-
-
-```
-
-
-## Has the FED been able to fulfill the mandate given to it by Congress? {.smaller} 
+## Has the FED fulfilled its mandate? {.smaller}
 
 -   This line chart below shows how the unemployment rate, inflation rate, and Fed Funds rate have changed over time.
 
 
+```{r}
+# Load required libraries
+library(ggplot2)   # For visualization
+library(dplyr)     # For data manipulation
+library(tidyr)     # For reshaping data
+
+# Ensure the date column is correctly formatted
+merged_df <- merged_df %>%
+  mutate(date = as.Date(paste(Year, Month, "1", sep = "-"), "%Y-%b-%d"))
+
+# Convert wide data into long format
+merged_df_long <- merged_df %>%
+  pivot_longer(cols = c(unemployment_rate, inflation_rate, fed_fund_rate),
+               names_to = "Indicator",
+               values_to = "Value")
+
+# Define criteria lines data frame
+criteria_lines <- data.frame(
+  Indicator = c("inflation_rate", "unemployment_rate"),
+  yintercept = c(2, 6)  # Inflation Rate = 2%, Unemployment Rate = 6%
+)
+
+# Create the faceted time series plot with criteria lines
+ggplot(merged_df_long, aes(x = date, y = Value, color = Indicator)) +
+  geom_line(size = 1.2) +
+  
+  # Add criteria lines only for Inflation and Unemployment plots
+  geom_hline(data = criteria_lines, aes(yintercept = yintercept),
+             color = c("red", "blue"), linetype = "dashed", size = 1) +
+
+  labs(title = "Economic Indicators Over Time with Criteria Lines",
+       x = "Year",
+       y = "Value (%)",
+       color = "Indicator") +
+  theme_minimal() +
+  facet_wrap( ~Indicator, scales = "free_y",nrow=3)  # Separate time series for each indicator
+
+```
 
 ## Fed Funds Rate (Red Line) {.smaller}
 
 -   The Fed Funds Rate represents the interest rate set by the Federal Reserve, influencing borrowing costs and monetary policy.
 
-## Peaks (~2000, 2006, 2019, 2023), Drops (~2003, 2009, 2015, 2020) {.smaller}
+## Peaks (\~2000, 2006, 2019, 2023), Drops (\~2003, 2009, 2015, 2020) {.smaller}
 
 -   Around 2000, rates were above 6%, likely due to the Federal Reserve's tightening to control inflation during the dot-com bubble.
--   Around 2006, rates again peaked (~5.25%) before the 2008 financial crisis, as the Fed tried to curb housing market overheating.
--   Around 2019, rates rose (~2.5%) as the Fed tightened policy post-Great Recession recovery.
--   2023 peak (~5%) due to aggressive hikes to combat inflation after the COVID-19 stimulus spending.
+-   Around 2006, rates again peaked (\~5.25%) before the 2008 financial crisis, as the Fed tried to curb housing market overheating.
+-   Around 2019, rates rose (\~2.5%) as the Fed tightened policy post-Great Recession recovery.
+-   2023 peak (\~5%) due to aggressive hikes to combat inflation after the COVID-19 stimulus spending.
 -   2003: The Fed cut rates below 2% following the dot-com bubble burst and 9/11 economic slowdown.
 -   2009: Sharp drop to nearly 0% as a response to the 2008 financial crisis.
 -   2015: Rates remained near zero until gradual hikes began post-recession.
 -   2020: Plunged back to near 0% due to the COVID-19 pandemic to stimulate the economy.
 
-##  Inflation Rate (Green Line) {.smaller}
+## Inflation Rate (Green Line) {.smaller}
 
 -   The Inflation Rate measures the rise in prices over time, typically influenced by demand, supply shocks, and monetary policy.
 
-## Peaks (~2008, 2022), Drops (~2009, 2015, 2020) {.smaller}
+## Peaks (\~2008, 2022), Drops (\~2009, 2015, 2020) {.smaller}
 
 -   2008: Inflation rose above 5% due to high oil prices before collapsing during the financial crisis.
 -   2022: Inflation spiked above 8%, driven by supply chain disruptions, post-COVID stimulus, and high consumer demand.
--   2009: Inflation briefly turned negative (~-1%), indicating deflation after the financial crisis recession.
--   2015: Inflation stayed low (~0%), reflecting slow economic recovery and low energy prices.
+-   2009: Inflation briefly turned negative (\~-1%), indicating deflation after the financial crisis recession.
+-   2015: Inflation stayed low (\~0%), reflecting slow economic recovery and low energy prices.
 -   2020: Inflation dipped as the economy shut down due to COVID-19, before rebounding sharply in 2021-2022.
 
 ## Unemployment Rate (Blue Line) {.smaller}
 
 -   The Unemployment Rate measures the percentage of people actively seeking jobs, reflecting labor market strength.
 
-## Peaks (~2010, 2020), Drops (~2007, 2019, 2022) {.smaller}
+## Peaks (\~2010, 2020), Drops (\~2007, 2019, 2022) {.smaller}
 
--   2010: Unemployment spiked to ~10% after the 2008 financial crisis, as companies cut jobs during the Great Recession.
--   2020: Massive peak (~15%) due to the COVID-19 pandemic lockdowns, which led to millions losing jobs almost overnight.
--   2007: Unemployment was low (~4%) before the financial crisis.
--   2019: Unemployment fell to ~3.5%, the lowest in decades, signaling a strong labor market before COVID-19.
--   2022: After the pandemic shock, the labor market recovered rapidly, bringing unemployment back to ~3.5%.
+-   2010: Unemployment spiked to \~10% after the 2008 financial crisis, as companies cut jobs during the Great Recession.
+-   2020: Massive peak (\~15%) due to the COVID-19 pandemic lockdowns, which led to millions losing jobs almost overnight.
+-   2007: Unemployment was low (\~4%) before the financial crisis.
+-   2019: Unemployment fell to \~3.5%, the lowest in decades, signaling a strong labor market before COVID-19.
+-   2022: After the pandemic shock, the labor market recovered rapidly, bringing unemployment back to \~3.5%.
+
+## Unemployment Figure
 
 ```{r}
 # Convert Month to numeric and create Date column
@@ -414,7 +295,8 @@ ggplot(cpi_df, aes(x = factor(Year), fill = inflation_criteria)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels for readability
 
 ```
-##  Key Takeaways from "Inflation Mandate Rarely Achieved Over the Years" Chart {.smaller}
+
+## Key Takeaways from "Inflation Mandate Rarely Achieved Over the Years" Chart {.smaller}
 
 -   Inflation was rarely within target levels for sustained periods (mostly orange bars).
 -   Post-crisis years (2009-2015) saw temporary improvements but lacked consistency.
@@ -427,6 +309,8 @@ ggplot(cpi_df, aes(x = factor(Year), fill = inflation_criteria)) +
 -   Each bar represents a full year (12 months), with colors indicating whether unemployment was within the target range for that month.
 -   Blue (Achieved): Indicates months where unemployment was at or below the target.
 -   Pink (Not Achieved): Represents months where unemployment exceeded the target, signaling economic distress.
+
+## Unemployment Mandate Achievement Over the Years
 
 ```{r}
 ggplot(unemp_df, aes(x = factor(Year), fill = unemp_criteria)) +
@@ -441,6 +325,7 @@ ggplot(unemp_df, aes(x = factor(Year), fill = unemp_criteria)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
 
 ```
+
 ## Key Takeaways
 
 -   Unemployment spikes during major economic downturns (2008-2014, 2020-2021) and takes years to recover.
@@ -450,4 +335,3 @@ ggplot(unemp_df, aes(x = factor(Year), fill = unemp_criteria)) +
 ## Conclusion:
 
 -   The Federal Reserve’s employment mandate has historically been met during stable economic periods but fails significantly during recessions, requiring years of recovery.
-

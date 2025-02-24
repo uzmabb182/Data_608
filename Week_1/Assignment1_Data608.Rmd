@@ -1,40 +1,15 @@
 ---
 title: "Assignment1_Data608"
 author: "Mubashira Qari"
-date: "2025-02-08"
-output: powerpoint_presentation
----
-
-
-## R Markdown
-
-This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
-
-
-## Slide with R Output
-
----
-title: "Assignment1_Data608"
-author: "Mubashira Qari"
-date: "2025-02-08"
-output: ioslides_presentation
----
-
----
-title: "Assignment1-Data608"
-author: "Mubashira Qari"
 date: "2024-12-21"
-output:
-  html_document: default
-  pdf_document: default
+format: revealjs
+editor: visual
 ---
 
-### Load Libraries
+
 
 ```{r}
-
+#| echo: false
 library(tidyverse)
 library(readxl)
 library(ggplot2)
@@ -47,89 +22,78 @@ library(stringdist)
 
 
 ```{r}
+#| echo: false
 
-IIJA_funding_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/IIJA%20FUNDING%20AS%20OF%20MARCH%202023.csv")
+IIJA_funding_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_1/IIJA%20FUNDING%20AS%20OF%20MARCH%202023.csv")
 
-state_population_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/State_Population_Data.csv")
-
-
-election_results_2020_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week%201/2020_Presidential_Election_Results.csv")
-
-```
+state_population_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_1/State_Population_Data.csv")
 
 
-### View the First Few Rows of Data
-```{r}
-
-#print(IIJA_funding_data)
+election_results_2020_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_1/2020_Presidential_Election_Results.csv")
 
 ```
 
 
-```{r}
-
-# Check column names
-colnames(IIJA_funding_data)
-head(IIJA_funding_data)
-```
 
 
 ```{r}
+#| echo: false
 # Renaming the columns
 
 IIJA_funding_data <- IIJA_funding_data %>%
   rename(State_Name = State..Teritory.or.Tribal.Nation, Funding_Billions = Total..Billions.)
 
-head(IIJA_funding_data)
+#head(IIJA_funding_data)
 #print(IIJA_funding_data)
 ```
 
 
 ```{r}
-
+#| echo: false
 # Convert column names to lowercase
 colnames(IIJA_funding_data ) <- tolower(colnames(IIJA_funding_data ))
 
 # View the modified data frame
 #print(IIJA_funding_data )
-head(IIJA_funding_data)
+#head(IIJA_funding_data)
 ```
 
 
 ```{r}
+#| echo: false
 # Sort by population (ascending order)
 IIJA_funding_data <- IIJA_funding_data[order(IIJA_funding_data$state_name),]
 
 # View the sorted dataframe
 #print(IIJA_funding_data)
-head(IIJA_funding_data)
+#head(IIJA_funding_data)
 ```
 
 
 ```{r}
-
+#| echo: false
 # Replace "Deleware" with "Delaware" conditionally
 IIJA_funding_data$state_name[IIJA_funding_data$state_name == "Deleware"] <- "Delaware"
 
 # View the updated DataFrame
 #print(IIJA_funding_data)
-head(IIJA_funding_data)
+#head(IIJA_funding_data)
 ```
 
 
 ```{r}
-
+#| echo: false
 # Add index column using mutate
 IIJA_funding_data <- IIJA_funding_data %>% mutate(index = row_number())
 
 # View the updated DataFrame
 #print(IIJA_funding_data)
-head(IIJA_funding_data)
+#head(IIJA_funding_data)
 ```
 
 
 ```{r}
-
+#| echo: false
 # Convert first letter of each word to uppercase using str_to_title
 IIJA_funding_data$state_name <- str_to_title(IIJA_funding_data$state_name)
 
@@ -142,118 +106,120 @@ IIJA_funding_data$state_name <- str_to_title(IIJA_funding_data$state_name)
 
 
 ```{r}
-
+#| echo: false
 # Convert column names to lowercase
 colnames(state_population_data ) <- tolower(colnames(state_population_data ))
 
 # View the modified data frame
 #print(state_population_data)
-head(state_population_data)
+#head(state_population_data)
 ```
 
 
 ```{r}
+#| echo: false
 # Sort by population (ascending order)
 state_population_data <- state_population_data[order(state_population_data$name),]
 
 # View the sorted dataframe
 #print(state_population_data)
-head(state_population_data)
+#head(state_population_data)
 ```
 
 
 
 ```{r}
 
-
+#| echo: false
 # Convert first letter of each word to uppercase using str_to_title
 state_population_data$name <- str_to_title(state_population_data$name)
 
 # View the updated DataFrame
 #print(state_population_data)
-head(state_population_data)
+#head(state_population_data)
 ```
 
 
 
 ```{r}
-
+#| echo: false
 # Convert column names to lowercase
 colnames(election_results_2020_data ) <- tolower(colnames(election_results_2020_data ))
 
 # View the modified data frame
 #print(election_results_2020_data)
-head(election_results_2020_data)
+#head(election_results_2020_data)
 ```
 
 ```{r}
 
-
+#| echo: false
 # Convert first letter of each word to uppercase using str_to_title
 election_results_2020_data$state <- str_to_title(election_results_2020_data$state)
 
 # View the updated DataFrame
 #print(election_results_2020_data)
-head(election_results_2020_data)
+#head(election_results_2020_data)
 ```
 
 
 ```{r}
-
+#| echo: false
 # Checking datatypes
 #str(IIJA_funding_data)
 
 #str(election_results_2020_data)
 
 ###str(state_population_data)
-head(election_results_2020_data)
+#head(election_results_2020_data)
 ```
 
 
 ```{r}
-
+#| echo: false
 # Convert 'state' column from integer to character
 state_population_data$name <- as.character(state_population_data$name)
 
 ###str(state_population_data)
-head(election_results_2020_data)
+#head(election_results_2020_data)
 ```
 
 
 
 ```{r}
-
+#| echo: false
 # Merge on 'state_name' from df1 and 'state' from df2
 result_df <- merge(IIJA_funding_data, state_population_data, by.x = "state_name", by.y = "name")
 
 # View the merged dataframe
 #print(result_df)
-head(result_df)
+#head(result_df)
 ```
 
 
 ```{r}
 
-
+#| echo: false
 # Merge on 'state_name' from df1 and 'state' from df2
 result_df <- merge(IIJA_funding_data, state_population_data, by.x = "state_name", by.y = "name")
 
 # View the merged dataframe
 #print(result_df)
-head(result_df)
+#head(result_df)
 ```
 
 
 
 ```{r}
 
+#| echo: false
 
 # Merge on 'state_name' from df1 and 'state' from df2
 merged_df <- merge(result_df, election_results_2020_data, by.x = "state_name", by.y = "state")
 
 # View the merged dataframe
 #print(merged_df)
-head(merged_df)
+#head(merged_df)
 
 ```
 
@@ -261,185 +227,116 @@ head(merged_df)
 
 
 ```{r}
-
+#| echo: false
 # Select specific columns
 new_df <- merged_df %>% select(state_name, funding_billions, popestimate2020, trump_win, biden_win)
 
 # View the new data frame
 #print(new_df)
-head(new_df)
+#head(new_df)
 ```
 
 
-### Create Key Metrics for Analysis
-
-### Funding Per state percentage
 
 ```{r}
+#| echo: false
 # Add a new column
 new_df <- new_df %>%
-  mutate(funding_per_state_percentage = round((funding_billions / sum(funding_billions)) * 100, 2))
+  mutate(funding_per_state_percentage = (funding_billions / sum(funding_billions)) * 100) %>% 
+  mutate(population_per_state_percentage = (popestimate2020 / sum(popestimate2020)) * 100) %>% 
+   mutate(Equity = (funding_per_state_percentage/population_per_state_percentage)-1) %>% 
+   mutate(Equitable=if_else(abs(Equity)<0.2, "Yes", "No")) %>% 
+   mutate(bias = case_when(
+                        biden_win == 1 & Equity > 0.2 ~ "Plus",
+                        biden_win == 1 & Equity < -0.2 ~ "Minus",
+                        .default = "Other",
+                        ))
 
-# Print the merged data frame
-#print(new_df)
-head(new_df)
-```
+#new_df
 
-
-```{r}
-
-# Add a new column
-new_df <- new_df %>%
-  mutate(population_per_state_percentage = round((popestimate2020 / sum(popestimate2020)) * 100, 2))
-
-# Print the merged data frame
-#print(new_df)
-head(new_df)
 
 ```
 
 
 
+## Definning Bias  And Equity
+
+- Equity is when the funding is
+- 
+
+
+
+
 ```{r}
 
-# Add a new columns for testing criteria
-new_df <- new_df %>%
-  mutate(population_per_state_plus5percent = population_per_state_percentage + (population_per_state_percentage * 0.05))
+# Convert to long format for ggplot
+data_long <- new_df %>%
+  select(state_name, funding_per_state_percentage, population_per_state_percentage) %>%
+  pivot_longer(cols = c(funding_per_state_percentage, population_per_state_percentage),
+               names_to = "Category",
+               values_to = "Percentage")
 
+# Create the grouped bar chart with better spacing
+ggplot(data_long, aes(x = reorder(state_name, -Percentage), y = Percentage, fill = Category)) +
+  geom_bar(stat = "identity", position = position_dodge(width = 0.8), width = 0.6) +  
+  # Adjust bar width
+  labs(title = "Comparison of Funding and Population Percentage per State",
+       x = "State",
+       y = "Percentage",
+       fill = "Category") +
+  theme_minimal() +
+   # Rotate labels and adjust spacing
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) 
 
-new_df <- new_df %>%
-  mutate(population_per_state_minus5percent = population_per_state_percentage - (population_per_state_percentage * 0.05))
-
-new_df <- new_df %>%
-  mutate(Equitable = ifelse(funding_per_state_percentage > population_per_state_minus5percent & 
-                            funding_per_state_percentage < population_per_state_plus5percent, 
-                            "Yes", "No"))
-new_df <- new_df %>%
-  mutate(bias = ifelse(biden_win == 1 & 
-                       funding_per_state_percentage > population_per_state_plus5percent, 
-                       "Yes", 
-                       "No"))
-
-# Print the merged data frame
-head(new_df)
 
 ```
 
-### Summary of Why These Fields Are Created
 
-The following new fields are created to analyze whether funding allocation is equitable and to detect potential political bias in how resources are distributed.
-
-### population_per_state_plus5percent & population_per_state_minus5percent
-
-### Purpose:
-
-These fields define an acceptable funding range (+/- 5%) around each state's population percentage.
-
-### Why?
-
-If funding is within ±5% of the population share, it is considered fair (equitable).
-
-If funding falls outside this range, the state may be overfunded or underfunded.
-
-population_per_state_plus5percent → Upper threshold (+5% of population share).
-
-population_per_state_minus5percent → Lower threshold (-5% of population share).
-
-### Equitable (Is the funding fair?)
-
-### Purpose:
-
-This field determines whether a state's funding is proportional to its population based on the ±5% rule.
-
-### Why?
-
-If funding falls within the ±5% range, the state is labeled "Yes" (Equitable).
-
-If funding falls outside the range, it is labeled "No" (Inequitable).
-
-This ensures we have an objective way to measure fairness in funding allocation.
-
-### bias (Is there political bias in funding?)
-
-### Purpose:
-
-This field identifies political bias in funding allocation, specifically if Democratic (Biden-won) states received more than the fair share in funding.
-
-Why?
-
-A state is considered biased ("Yes") if:
-
-The state voted for Biden (biden_win == 1)
-
-The state received funding more than equitable range
-
-Otherwise, the state is labeled as "No" (No bias detected).
-
-This helps detect whether Democratic states were treated more favorably compared to Republican states.
-
-
-### Is the Allocation Equitable Based on Population?
-
-### Funding Allocation vs. Population
-
-This chart compares funding per state percentage to population per state percentage. If funding is fair, bars should align with the population.
 
 ```{r}
-ggplot(new_df, aes(x = reorder(state_name, population_per_state_percentage), 
-                   y = funding_per_state_percentage, 
-                   fill = Equitable)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  scale_fill_manual(values = c("Yes" = "green", "No" = "orange")) +
-  labs(title = "Funding Allocation vs. Population Percentage",
+# Create the bar chart
+ggplot(new_df, aes(x = reorder(state_name, -funding_per_state_percentage), 
+                 y = funding_per_state_percentage, 
+                 fill = Equitable)) +
+  geom_bar(stat = "identity", width = 0.7) +  
+  # Adjust bar width for better spacing
+  labs(title = "Funding Percentage by State",
        x = "State",
        y = "Funding Percentage",
        fill = "Equitable") +
-  theme_minimal()
-
+  scale_fill_manual(values = c("Yes" = "green", "No" = "orange")) +  
+  # Custom colors
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 10),  
+    # Rotate state labels for readability
+    # Add space below x-axis
+    axis.title.x = element_text(margin = margin(t = 10))  
+  )
 ```
 
 
-Interpretation:
-
-Green bars ("Yes") → States where funding aligns with population.
-
-Yellow bars ("No") → States overfunded or underfunded, indicating inequity.
-
-If many states are yellow, the allocation is not equitable.
 
 
-### Funding vs. Population Percentage
+### Criteria
 
-If funding is fair, points should align in a linear trend.
+If funding is within ±5% of the population share, it is considered fair (equitable).
 
-```{r}
+If funding falls outside this range, the state may be over funded or under funded.
 
-ggplot(new_df, aes(x = population_per_state_percentage, 
-                   y = funding_per_state_percentage, 
-                   color = Equitable)) +
-  geom_point(size = 4, alpha = 0.7) +
-  geom_smooth(method = "lm", color = "black", linetype = "dashed") +
-  scale_color_manual(values = c("Yes" = "green", "No" = "orange")) +
-  labs(title = "Funding Allocation vs. Population Percentage",
-       x = "Population Percentage",
-       y = "Funding Percentage",
-       color = "Equitable") +
-  theme_minimal()
+### Interpretation:
 
+Here in the chart, Green bars ("Yes") → means States where funding % falls within ±5% of the population share %.
 
-```
+Yellow bars ("No") → means States over funded or under funded, indicating inequity.
 
-Interpretation:
+Overall, many states are yellow, the allocation is not equitable.
 
-A strong trend line suggests fair allocation.
-
-Scattered points with many "No" (yellow) indicate funding was not proportional.
 
 
 ### Is the allocation equitable based on the population of each of the States and Territories, or is bias apparent?
 
-According to the chart below, about 80% of the states have inequitable allocation.
+According to the chart below, about 80% of the states have inequitable allocation based on the population of each of the States and Territories and is not bias
 
 Does the allocation favor the political interests of the Biden administration?
 
@@ -447,35 +344,35 @@ No, it doesn't serve the political interests of the Biden administration
 
 ```{r}
 
-ggplot(new_df, aes(x = reorder(state_name, population_per_state_percentage), 
-                   y = funding_per_state_percentage, 
-                   fill = bias)) +
-  geom_bar(stat = "identity") +
-  coord_flip() +
-  scale_fill_manual(values = c("Yes" = "orange", "No" = "green")) +
-  labs(title = "Funding Allocation vs. Population Percentage",
+# Create the bar chart
+ggplot(new_df, aes(x = reorder(state_name, -funding_per_state_percentage), 
+                 y = funding_per_state_percentage, 
+                 fill = bias)) +
+  geom_bar(stat = "identity", width = 0.7) +  
+  # Adjust bar width for better spacing
+  labs(title = "Funding Percentage by State",
        x = "State",
        y = "Funding Percentage",
-       fill = "bias") +
-  theme_minimal()
-
-
-```
-
-
-
-```{r}
-
-# Define the file path with filename and extension
-file_path <- "C:/Users/Uzma/Downloads/new_df.csv"
-
-# Write dataframe to CSV
-write.csv(new_df, file = file_path, row.names = FALSE)
-
-# Confirm that the file was saved
-print("File saved successfully!")
+       fill = "Bias") +
+  scale_fill_manual(values = c("Plus" = "green", "Minus" = "orange")) +  
+  # Custom colors
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5, size = 10),  
+    # Rotate state labels for readability
+    # Add space below x-axis
+    axis.title.x = element_text(margin = margin(t = 10))  
+  )
 
 ```
+Criteria:
+
+A state is considered biased ("Yes") if:
+
+The state voted for Biden (biden_win == 1) and the state received funding more than equitable range
+
+Otherwise, the state is labeled as "No" (No bias detected).
+
 
 ```{r}
 # Select specific columns
@@ -496,14 +393,10 @@ total_population <- sum(group_df$popestimate2020, na.rm = TRUE)
 
 # Create a new table with grouped states and percentages
 grouped_table <- group_df %>%
-  group_by(trump_win, biden_win) %>%
+  group_by(biden_win) %>%
   summarize(
-    trump_funding_percentage = round(sum(ifelse(trump_win == 1, funding_billions, 0), na.rm = TRUE) / total_funding * 100, 2),
-    biden_funding_percentage = round(sum(ifelse(biden_win == 1, funding_billions, 0), na.rm = TRUE) / total_funding * 100, 2),
-    trump_population_percentage = round(sum(ifelse(trump_win == 1, popestimate2020, 0), na.rm = TRUE) / total_population * 100, 2),
-    biden_population_percentage = round(sum(ifelse(biden_win == 1, popestimate2020, 0), na.rm = TRUE) / total_population * 100, 2)
-  ) %>%
-  ungroup()
+    winner_funding_percentage = (sum(funding_billions)/sum(popestimate2020))*1e9
+  )
 
 # Print the new grouped table with rounded percentages
 print(grouped_table)
@@ -511,18 +404,6 @@ head(grouped_table)
 ```
 
 
-```{r}
-
-# Define the file path with filename and extension
-file_path <- "C:/Users/Uzma/Downloads/grouped_table.csv"
-
-# Write dataframe to CSV
-write.csv(grouped_table, file = file_path, row.names = FALSE)
-
-# Confirm that the file was saved
-print("File saved successfully!")
-
-```
 
 ### Does the allocation favor the political interests of the Biden administration?
 
@@ -533,91 +414,57 @@ No, it does not favor the the political interests of the Biden administration.
 ### Bar Chart
 
 ```{r}
-# Convert data to long format for easy visualization
-grouped_long <- grouped_table %>%
-  pivot_longer(cols = c(trump_funding_percentage, biden_funding_percentage, 
-                        trump_population_percentage, biden_population_percentage), 
-               names_to = "Category", 
-               values_to = "Percentage")
 
-# Create labels for clarity
-grouped_long$Group <- ifelse(grepl("trump", grouped_long$Category), "Trump-Won States", "Biden-Won States")
-grouped_long$Metric <- ifelse(grepl("funding", grouped_long$Category), "Funding Allocation", "Population Percentage")
-
+grouped_table = grouped_table %>% mutate("Winner"=if_else(biden_win == 1, "biden", "trump"))
 # Create the bar chart
-ggplot(grouped_long, aes(x = Group, y = Percentage, fill = Metric)) +
+ggplot(grouped_table, aes(x = Winner, y = winner_funding_percentage, fill = Winner)) +
   geom_bar(stat = "identity", position = "dodge") +
   scale_fill_manual(values = c("Funding Allocation" = "green", "Population Percentage" = "orange")) +
   labs(title = "Funding Allocation vs. Population Share by Political Affiliation",
        x = "Political Affiliation (2020 Election)",
-       y = "Percentage of Total",
-       fill = "Category") +
+       y = "Percentage of Total")+
   theme_minimal()
 
 
 ```
 
-Analysis of the Bar Chart
+### Analysis of the Bar Chart:
 
 If funding allocation closely matches population share, then the distribution is likely fair.
 
-If Biden states receive significantly more funding than their population share, it suggests possible bias in allocation.
+We can interpret from the bar chart that the Biden states receive significantly less funding than their population share, and it does not suggests possible bias in allocation.
 
-If Trump states receive less funding despite a larger population share, it may indicate under funding relative to need.
+Whereas the Trump states receive more funding despite a smaller population share, this indicate over funding relative to need.
 
-
-
-### Funding vs. Population for Biden vs. Trump States
-
-This scatter plot shows whether Biden states received disproportionately more funding.
-
-### Scatter Plot
-
-```{r}
-
-ggplot(grouped_table, aes(x = trump_population_percentage, y = trump_funding_percentage, color = "Trump States")) +
-  geom_point(size = 4) +
-  geom_smooth(method = "lm", linetype = "dashed", color = "red") +
-  geom_point(aes(x = biden_population_percentage, y = biden_funding_percentage, color = "Biden States"), size = 4) +
-  geom_smooth(aes(x = biden_population_percentage, y = biden_funding_percentage), 
-              method = "lm", linetype = "dashed", color = "blue") +
-  scale_color_manual(values = c("Trump States" = "red", "Biden States" = "blue")) +
-  labs(title = "Funding Allocation vs. Population Share for Trump and Biden States",
-       x = "Population Share (%)",
-       y = "Funding Share (%)",
-       color = "Political Group") +
-  theme_minimal()
-
-```
 
 
 ### Storyboard (Sequential List of Phrases)
 
-### Introduction – The Funding Question: The U.S. government allocated billions in infrastructure funding—was it distributed fairly across states?
+### Big Idea:
 
-### Data Collection & Analysis: We examined funding allocation, state populations, and 2020 election results to assess fairness.
+By analyzing the "funding_per_state_percentage" and comparing it to each state's population share "population_per_state_percentage" and political affiliation, we can assess whether federal funding is distributed equitably or if there is evidence of political bias in the allocation process.
 
-### Key Finding – Inequitable Distribution: About 80% of states received funding disproportionate to their population size.
+### Summary:
 
-### Bias Investigation: Did Biden-won states receive more funding than Trump-won states?
+To evaluate the fairness of Infrastructure Investment and Jobs Act funding, two new column, "funding_per_state_percentage," and "population_per_state_percentage" are created. These column represents the percentage of total of each state by dividing each value to  the total sum for all states, then multiplying the result by 100 to express it as a percentage.
 
-### Final Conclusion: The analysis shows no strong bias toward Biden states; inequities exist, but they don’t follow a clear political pattern.
+To determine whether funding is equitable, two additional fields are created.
 
-### 3-Minute Story (One Paragraph)
+Next, "population_per_state_plus5percent" represents the upper fairness threshold. It is calculated by adding the percentage of the total U.S. population that lives in a given state, then increasing this percentage by 5%.
+"population_per_state_minus5percent" represents the lower fairness threshold. It is calculated the same way as the upper threshold but with a 5% decrease instead of an increase.
 
-When the U.S. government passed the Infrastructure Investment and Jobs Act (IIJA), it promised to distribute funding fairly to support all states. However, was this promise kept? By analyzing funding allocations alongside state populations and election results, we discovered that about 80% of states received either more or less than their fair share based on population. To investigate potential bias, we checked whether Biden-won states received disproportionately higher funding. The results? While the distribution was inequitable, there was no clear pattern favoring Democratic states—both Republican and Democratic states experienced funding disparities. This suggests that funding decisions may be influenced by other factors beyond politics, such as infrastructure needs or economic priorities.
+A state’s funding allocation is considered equitable if the percentage of total funding it receives falls within this ±5% range of its population share. If the funding percentage is above the upper threshold, the state is classified as overfunded. If it is below the lower threshold, the state is classified as underfunded.
 
-### Big Idea Summary (One Sentence)
+For assessing Political Bias ("bias" Column), and determine whether the funding distribution favors the Biden administration, another column called "bias" is introduced. A state is labeled as "Yes" (biased) if both of the following conditions are met:
 
-The federal infrastructure funding distribution was inequitable, but no clear political bias was found in favor of Biden-won states.
+The state voted for Biden (meaning Biden won the state in the last presidential election).
+The state received more than its fair share of funding, meaning its funding percentage is greater than the upper fairness threshold.
+If either of these conditions is not met, the state is labeled "No" (No bias detected).
 
+Final Analysis and Visualization
+To visually compare the funding distribution against population shares, a bar chart is created. The key insights from this analysis include:
 
-
-
-
-
-
-
+It seems like around 80% of states receive inequitable funding, meaning they either receive more or less than their fair share based on population. There is no evidence of political bias in favor of the Biden administration. The analysis shows that Biden-won states generally receive less funding relative to their population share, while Trump-won states tend to receive more. Republican states (Trump-won) receive a higher share of funding despite having a smaller share of the U.S. population, suggesting these states may be over funded compared to their population needs. By using this structured approach, we can objectively assess the fairness of funding allocation and detect whether political bias plays a role in resource distribution.
 
 
 
