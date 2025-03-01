@@ -6,7 +6,7 @@ format: revealjs
 editor: visual
 ---
 
-```{r}
+```{r, warning=FALSE}
 
 library(tidyverse)
 library(readxl)
@@ -55,16 +55,34 @@ gun_ownership_by_state_data <- read.csv("https://raw.githubusercontent.com/uzmab
 
 mortality_breakdown_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/mortality_breakdown.csv")
 
+state_abbreviation <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/states_abbreviations.csv")
+
 ```
 
 
 ```{r}
 burglary_data
-#firearm_laws_data
+firearm_laws_data
 firearm_mortality_data
 #gun_ownership_by_state_data
 #mortality_breakdown_data
+state_abbreviation
 ```
 
+```{r}
+# Replacing value 'District of Columbia' by 'DC '
+firearm_mortality_data$STATE <- gsub("District of Columbia", "DC", firearm_mortality_data$STATE)
+firearm_mortality_data
+```
 
+```{r}
+# Keeps all rows from firearm_mortality_data and fills in NA for missing matches in state_abbreviation
+
+library(dplyr)
+
+merged_data <- firearm_mortality_data %>%
+  left_join(state_abbreviation, by = c("STATE" = "Code"))
+
+merged_data
+```
 
