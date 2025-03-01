@@ -8,6 +8,8 @@ editor: visual
 
 ```{r, warning=FALSE}
 
+
+library(dplyr)
 library(tidyverse)
 library(readxl)
 library(ggplot2)
@@ -42,47 +44,108 @@ library(tidyr)
 library(reshape2)
 library(mixtools)
 library(skimr)
+library(ggplot2)
+library(dplyr)
+library(usmap)   # For U.S. map plotting
+library(sf)      # For spatial data handling 
+library(viridis) # For color scales
 
 
 # Loading Datasets
-burglary_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/burglary.csv")
+firearm_mortality_df <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/State_Overview-2019-2023.csv")
 
-firearm_laws_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/firearm_laws.csv")
 
-firearm_mortality_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/firearm_mortality2022.csv")
+gun_deaths_by_demographics_df <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/Gun_Deaths_by_Demographics-2019-2023.csv")
 
-gun_ownership_by_state_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/gun-ownership-by-state.csv")
+# firearm_mortality_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/firearm_mortality2022.csv")
 
-mortality_breakdown_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/mortality_breakdown.csv")
-
-state_abbreviation <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/states_abbreviations.csv")
-
+state_abbreviation_df <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/states_abbreviations.csv")
+gun_deaths_by_demographics_df
 ```
 
 
 ```{r}
-burglary_data
-firearm_laws_data
-firearm_mortality_data
-#gun_ownership_by_state_data
-#mortality_breakdown_data
-state_abbreviation
-```
 
-```{r}
 # Replacing value 'District of Columbia' by 'DC '
-firearm_mortality_data$STATE <- gsub("District of Columbia", "DC", firearm_mortality_data$STATE)
-firearm_mortality_data
+#firearm_mortality_df$STATE <- gsub("District of Columbia", "DC", firearm_mortality_df$STATE)
+
+
+# Keeps all rows from firearm_mortality_data and fills in NA for missing matches in state_abbreviation
+firearm_mortality_df <- firearm_mortality_df %>%
+  left_join(state_abbreviation_df, by = c("State" = "State"))
+
+gun_deaths_by_demographics_df <- gun_deaths_by_demographics_df %>%
+  left_join(state_abbreviation_df, by = c("State" = "State"))
+
+
+# Get working directory path
+path <- getwd()
+
+# Write dataframe to CSV
+
+file_path <- "C:/Users/Uzma/Downloads/overview_df.csv"
+
+write.csv(firearm_mortality_df, file = file_path, row.names = FALSE)
+
+#firearm_mortality_df
+gun_deaths_by_demographics_df
+
+
 ```
+
 
 ```{r}
-# Keeps all rows from firearm_mortality_data and fills in NA for missing matches in state_abbreviation
 
-library(dplyr)
+#  Data Preparation
 
-merged_data <- firearm_mortality_data %>%
-  left_join(state_abbreviation, by = c("STATE" = "Code"))
+# Convert state names to uppercase for consistency
+#overview_df$State <- toupper(overview_df$State)
 
-merged_data
+# Remove "United States" row if present
+overview_df <- overview_df %>% filter(State != "UNITED STATES")
+
+# Check data structure
+#str(overview_df)
+
 ```
+
+## Choropleth Map: Firearm Mortality Rate Per 100,000 People:
+
+-   This map highlights geographical disparities in firearm mortality across states.
+
+
+```{r}
+
+# Ensure the State column is correctly named and formatted
+colnames(overview_df) <- tolower(colnames(overview_df))  # Convert column names to lowercase
+overview_df <- overview_df %>% rename(state = state)  # Ensure the column is named "state"
+
+# Convert state names to title case (e.g., "ALABAMA" → "Alabama")
+overview_df$state <- tools::toTitleCase(tolower(overview_df$state))
+
+library(plotly)
+
+# Convert ggplot to interactive plot
+ggplot_map <- plot_usmap(data = overview_df, values = "age.adjusted.rate..per.100.000.") +
+  scale_fill_viridis_c(name = "Deaths per 100k") +
+  labs(title = "Firearm Mortality Disparities Across the U.S. (2019-2023)",
+       subtitle = "States with higher firearm deaths per 100,000 people",
+       caption = "Data Source: CDC") +
+  theme_minimal()
+
+# Make the map interactive
+ggplotly(ggplot_map)
+
+
+
+```
+## Key Findings:
+
+-   The Southern and Western states tend to have higher firearm death rates.
+-   Northeastern states (Massachusetts, New York, New Jersey) have the lowest mortality rates.
+
+## Bar Chart: Comparing Firearm Deaths in Strict vs. Loose Gun Law States
+
+-   Do Stricter Gun Laws Lead to Lower Firearm Mortality? A State Comparison
+
 
