@@ -1,0 +1,70 @@
+---
+title: "Story3_Data608"
+author: "Mubashira Qari"
+date: 2025-2-23"
+format: revealjs
+editor: visual
+---
+
+```{r}
+
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(tools)
+library(stringdist)
+library(broom)
+library(gridExtra)
+library(gclus)
+library(car)
+library(VGAM)
+library(MASS)
+library(rpart.plot)
+library(ggfortify)
+library(gridExtra)
+library(forecast)
+library(fpp2)
+library(fma)
+library(kableExtra)
+library(e1071)
+library(mlbench)
+library(ggcorrplot)
+library(DataExplorer)
+library(timeDate)
+library(caret)
+library(GGally)
+library(corrplot)
+library(RColorBrewer)
+library(tibble)
+library(tidyr)
+library(reshape2)
+library(mixtools)
+library(skimr)
+
+
+# Loading Datasets
+burglary_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/burglary.csv")
+
+firearm_laws_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/firearm_laws.csv")
+
+firearm_mortality_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/firearm_mortality2022.csv")
+
+gun_ownership_by_state_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/gun-ownership-by-state.csv")
+
+mortality_breakdown_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/mortality_breakdown.csv")
+
+```
+
+
+```{r}
+burglary_data
+#firearm_laws_data
+firearm_mortality_data
+#gun_ownership_by_state_data
+#mortality_breakdown_data
+```
+
+
+
