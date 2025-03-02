@@ -287,5 +287,53 @@ ggplot(clean_data, aes(x = per100k_population_poverty, y = per100k_population_de
 -   The regression model and scatter plots confirm that states with stricter gun laws (higher LAWTOTAL scores) tend to have lower firearm death rates.
 -   States requiring handgun permits (PERMITH = 1) show fewer deaths, while states without permit requirements see higher firearm mortality.
 
+## Permit Laws and Gun-Related Death Rates – A Potential Protective Effect?
 
+-   The boxplot visualizes the relationship between permit laws (PERMITLAW: 0 = No, 1 = Yes) and death rates per 100k population.
+
+```{r}
+# Load necessary library
+library(ggplot2)
+
+# Ensure PERMITLAW is a factor (categorical)
+clean_data$PERMITLAW <- as.factor(clean_data$PERMITLAW)
+
+# Boxplot with jittered points
+ggplot(clean_data, aes(x = PERMITLAW, y = per100k_population_death, fill = PERMITLAW)) +
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +  # Boxplot with transparent fill
+  geom_jitter(aes(color = PERMITLAW), width = 0.2, alpha = 0.6, size = 2) +  # Jittered points
+  labs(
+    title = "Impact of Permit Laws on Death Rates",
+    subtitle = "Permit Laws and Gun-Related Death Rates – A Potential Protective Effect?",
+    x = "Permit Law (0 = No, 1 = Yes)",
+    y = "Death Rate per 100k Population"
+  ) +
+  scale_fill_manual(values = c("#F8766D", "#00BFC4")) +  # Fix color mapping
+  scale_color_manual(values = c("#F8766D", "#00BFC4")) +  # Fix jitter colors
+  theme_minimal() +
+  theme(legend.position = "none")  # Remove redundant legend
+
+
+```
+### Interpretation of the Boxplot
+
+ Here's what we can infer from the chart:
+
+-   Median Death Rates
+The central line inside each box represents the median (middle value).
+If the median for PERMITLAW = 1 (states with permit laws) is lower than for PERMITLAW = 0, this suggests that permit laws might be associated with lower death rates.
+Conversely, if they are similar, it suggests no strong association.
+
+-  Spread of Data (Interquartile Range, IQR)
+The height of each box represents the middle 50% of data (IQR).
+If PERMITLAW = 0 has a larger spread, it suggests more variation in death rates in states without permit laws.
+A smaller spread for PERMITLAW = 1 could indicate that states with permit laws have more consistent (and possibly lower) death rates.
+
+-  Outliers & Individual Data Points
+The jittered points (dots) represent individual states.
+If many high death rate outliers appear in the PERMITLAW = 0 group, it suggests that states without permit laws might experience more extreme cases of high gun-related deaths.
+
+- General Trend
+If the entire PERMITLAW = 1 box is lower than PERMITLAW = 0, it strongly suggests that states with permit laws tend to have lower death rates.
+If the boxes overlap significantly, it suggests no strong difference in death rates between the two groups.
 
