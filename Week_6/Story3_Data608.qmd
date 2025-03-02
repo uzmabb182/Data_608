@@ -51,17 +51,99 @@ library(sf)      # For spatial data handling
 library(viridis) # For color scales
 
 
-# Loading Datasets
+# Loading Dataset
+
+# Code book: https://brightspace.cuny.edu/content/enforced/680560-SPS01_DATA_608_1252_18469/37363-0001-Codebook-ICPSR.pdf
+
 firearm_mortality_df <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/State_Overview-2019-2023.csv")
 
+firearm_laws_df <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/firearm_laws.csv")
 
 gun_deaths_by_demographics_df <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/Gun_Deaths_by_Demographics-2019-2023.csv")
 
 # firearm_mortality_data <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/firearm_mortality2022.csv")
 
 state_abbreviation_df <- read.csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/states_abbreviations.csv")
-gun_deaths_by_demographics_df
+#gun_deaths_by_demographics_df
 ```
+
+
+
+```{r}
+### Preparing for API Call Census 2010 Data
+Sys.setenv(census_api_key = "f7ce5a76ddf2088c73fda9c0a87410995cebbffa")
+#Sys.getenv("census_api_key")
+```
+
+
+```{r}
+# Access the API key
+# Save the Census API key in the environmental variable.
+#census_api_key("YOUR KEY GOES HERE", install = TRUE)
+```
+
+
+```{r}
+#Sys.getenv("census_api_key")
+```
+
+
+```{r}
+# Fetching Census Data for the year 2020
+# https://api.census.gov/data/2020/acs/acs1?get=NAME,B01001_001E&for=state:*
+# Load required packages
+
+library(tidycensus)
+library(dplyr)
+
+census_df <- get_acs(
+  geography = "state",
+  variables = c(population = "B01003_001E",
+                median_age = "B01002_001E",
+                household_income = "B19013_001E",
+                per_capita_income = "B19301_001E",
+                poverty_count = "B17001_002E",
+                unemployment_count = "B23025_005E"
+                ),
+  output = "wide",
+  year = 2020
+)
+
+#head(census_df)
+# View the actual column names in census_df
+colnames(census_df)
+
+```
+
+
+
+```{r}
+library(dplyr)
+
+
+#census_df <- census_df %>% select(
+#  NAME, population, median_age, household_income, per_capita_income, 
+#  poverty_count, unemployment_count
+#)
+#required_columns <- c("NAME", "population", "median_age", "household_income", 
+#                      "per_capita_income", "poverty_count", "unemployment_count")
+
+#census_df <- census_df %>% select(all_of(required_columns))
+
+
+# Print first few rows to verify
+head(census_df)
+
+
+# Capitalize first letter of each column name
+names(census_df) <- tools::toTitleCase(tolower(names(census_df)))
+
+# View the dataframe
+head(census_df)
+
+
+```
+
 
 
 ```{r}
@@ -78,74 +160,132 @@ gun_deaths_by_demographics_df <- gun_deaths_by_demographics_df %>%
   left_join(state_abbreviation_df, by = c("State" = "State"))
 
 
-# Get working directory path
-path <- getwd()
-
-# Write dataframe to CSV
-
-file_path <- "C:/Users/Uzma/Downloads/overview_df.csv"
-
-write.csv(firearm_mortality_df, file = file_path, row.names = FALSE)
-
 #firearm_mortality_df
-gun_deaths_by_demographics_df
+#gun_deaths_by_demographics_df
 
 
 ```
 
 
 ```{r}
-
-#  Data Preparation
-
-# Convert state names to uppercase for consistency
-#overview_df$State <- toupper(overview_df$State)
 
 # Remove "United States" row if present
-overview_df <- overview_df %>% filter(State != "UNITED STATES")
+gun_deaths_by_demographics_df <- gun_deaths_by_demographics_df %>% filter(State != "UNITED STATES")
 
-# Check data structure
-#str(overview_df)
+gun_deaths_by_demographics_df <- gun_deaths_by_demographics_df %>%
+  left_join(census_df, by = c("State" = "Name"))
+
+
+
+gun_deaths_by_demographics_df <- gun_deaths_by_demographics_df %>%
+  left_join(firearm_laws_df, by = c("State" = "STATE"))
+
+
+library(dplyr)
+
+# Remove rows where "column_name" is NA
+gun_deaths_by_demographics_df <- gun_deaths_by_demographics_df %>%
+  filter(!is.na(Total.Deaths....))
+
+gun_deaths_by_demographics_df$Population <- as.integer(gun_deaths_by_demographics_df$Population)
+gun_deaths_by_demographics_df$Poverty_count <- as.integer(gun_deaths_by_demographics_df$Poverty_count)
+gun_deaths_by_demographics_df$Unemployment_count <- as.integer(gun_deaths_by_demographics_df$Unemployment_count)
+#str(gun_deaths_by_demographics_df)
+
+gun_deaths_by_demographics_df <- mutate(gun_deaths_by_demographics_df, per100k_population_poverty = (Poverty_count/Population)*100000)
+#gun_deaths_by_demographics_df <- mutate(gun_deaths_by_demographics_df, per_capita_unemployment = (Unemployment_count/Population)*100)
+#gun_deaths_by_demographics_df <- mutate(gun_deaths_by_demographics_df, per_capita_death = (Total.Deaths..../Population)*100)
+
+#gun_deaths_by_demographics_df
 
 ```
-
-## Choropleth Map: Firearm Mortality Rate Per 100,000 People:
-
--   This map highlights geographical disparities in firearm mortality across states.
 
 
 ```{r}
+library(tidyverse)
 
-# Ensure the State column is correctly named and formatted
-colnames(overview_df) <- tolower(colnames(overview_df))  # Convert column names to lowercase
-overview_df <- overview_df %>% rename(state = state)  # Ensure the column is named "state"
+# Ensure `per100k_population_death` exists and remove missing values
+clean_data <- gun_deaths_by_demographics_df %>%
+  drop_na(Total.Deaths...., Population, LAWTOTAL) %>%
+  mutate(per100k_population_death = (Total.Deaths.... / Population) * 100000)  # Compute deaths per 100k
 
-# Convert state names to title case (e.g., "ALABAMA" → "Alabama")
-overview_df$state <- tools::toTitleCase(tolower(overview_df$state))
+```
 
-library(plotly)
+## Gun Laws (LAWTOTAL) vs. Firearm Deaths (per100k_population_death)
 
-# Convert ggplot to interactive plot
-ggplot_map <- plot_usmap(data = overview_df, values = "age.adjusted.rate..per.100.000.") +
-  scale_fill_viridis_c(name = "Deaths per 100k") +
-  labs(title = "Firearm Mortality Disparities Across the U.S. (2019-2023)",
-       subtitle = "States with higher firearm deaths per 100,000 people",
-       caption = "Data Source: CDC") +
-  theme_minimal()
+-   This scatter plot will shows that states with more gun laws have lower firearm death rates.
+-   The red regression line trends downward, it suggests that more gun laws lead to fewer firearm deaths.
 
-# Make the map interactive
-ggplotly(ggplot_map)
+```{r}
+ggplot(clean_data, aes(x = LAWTOTAL, y = per100k_population_death)) +
+  geom_point(size = 4, alpha = 0.7, color = "blue") +  
+  geom_smooth(method = "lm", se = TRUE, linetype = "dashed", color = "red") +  
+  theme_minimal(base_size = 14) +  
+  labs(title = "More Gun Laws have Lower Firearm Death Rates",
+       x = "Total Gun Laws (LAWTOTAL)",
+       y = "Firearm Deaths per 100k Population")  
 
 
 
 ```
-## Key Findings:
+## Firearm Deaths by PERMITH (Handgun Permit Laws)
 
--   The Southern and Western states tend to have higher firearm death rates.
--   Northeastern states (Massachusetts, New York, New Jersey) have the lowest mortality rates.
+-   This compares firearm deaths in states that require a handgun permit (PERMITH = 1) vs. those that don't (PERMITH = 0).
+-   PERMITH = 1 has a lower median death rate, it suggests that handgun permit laws reduce firearm deaths.
 
-## Bar Chart: Comparing Firearm Deaths in Strict vs. Loose Gun Law States
+```{r}
+ggplot(clean_data, aes(x = factor(PERMITH), y = per100k_population_death, fill = factor(PERMITH))) +
+  geom_boxplot() +
+  theme_minimal(base_size = 14) +
+  scale_fill_manual(values = c("red", "blue"), name = "Handgun Permit") +
+  labs(title = "Handgun Permit Laws Reduce Firearm Deaths",
+       x = "Handgun Permit Required (0 = No, 1 = Yes)",
+       y = "Firearm Deaths per 100k Population")
 
--   Do Stricter Gun Laws Lead to Lower Firearm Mortality? A State Comparison
+```
+## Analyzing the correlation between poverty and firearm deaths:
+
+-   The scatter plot below shows a strong positive correlation between per100k_population_poverty and firearm deaths.
+-   States with higher poverty levels tend to experience more gun-related fatalities, suggesting that economic hardship contributes to gun violence.
+
+```{r}
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+
+# Check if required columns exist
+required_columns <- c("per100k_populationa_death", "per100k_population_poverty")
+missing_columns <- setdiff(required_columns, colnames(gun_deaths_by_demographics_df))
+
+
+# Convert columns to numeric (if necessary)
+#gun_deaths_by_demographics_df <- gun_deaths_by_demographics_df %>%
+#  mutate(across(c(per100k_population_death, per100k_population_poverty), as.numeric))
+
+
+# Create a scatter plot with trend line
+ggplot(clean_data, aes(x = per100k_population_poverty, y = per100k_population_death)) +
+  geom_point(aes(color = per100k_population_poverty), size = 3, alpha = 0.7) +  # Scatter plot points
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed", size = 1.2) +  # Regression line
+  scale_color_gradient(low = "blue", high = "red") +  # Color scale
+  theme_minimal(base_size = 14) +
+  labs(title = "Firearm Deaths vs Poverty",
+       subtitle = "Strong Positive Correlation between Poverty and Firearm Deaths",
+       x = "Per 100K Population Poverty",
+       y = "Firearm Deaths per 100K Population",
+       color = "Poverty Level") +
+  theme(
+    panel.grid.major = element_line(color = "gray85"),
+    panel.grid.minor = element_blank(),
+    legend.position = "right"
+  )
+
+
+```
+## The Regression Model Interpretation:
+
+-   The regression model and scatter plots confirm that states with stricter gun laws (higher LAWTOTAL scores) tend to have lower firearm death rates.
+-   States requiring handgun permits (PERMITH = 1) show fewer deaths, while states without permit requirements see higher firearm mortality.
+
 
 
