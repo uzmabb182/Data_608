@@ -6,7 +6,7 @@ format: revealjs
 editor: visual
 ---
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, echo=FALSE, include=FALSE}
 #install.packages("tinytex")
 #tinytex::install_tinytex()  # Install TinyTeX (if not installed)
 #tinytex::tlmgr_install("koma-script")  # Install the missing KOMA-Script package

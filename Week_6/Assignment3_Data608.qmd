@@ -6,9 +6,7 @@ format: revealjs
 editor: visual
 ---
 
-## Story -3 : Do stricter gun laws reduce firearm gun deaths?
-
-```{r, warning = FALSE, message = FALSE}
+```{r, warning = FALSE, message = FALSE, }
 # echo=FALSE, include=FALSE
 
 library(dplyr)
@@ -114,7 +112,7 @@ mortality_breakdown_df <- mortality_breakdown_df %>%
   rename(code = State)
 
 
-#print(mortality_breakdown_df)
+print(mortality_breakdown_df)
 
 # Rename all column names to lowercase
 library(dplyr)
@@ -134,7 +132,7 @@ mortality_breakdown_df <- mortality_breakdown_df %>%
 firearm_laws_df <- firearm_laws_df %>%
   rename_with(tolower)
 
-#firearm_laws_df
+firearm_laws_df
 ```
 
 
@@ -157,7 +155,7 @@ census_df <- census_df %>%
   rename_with(tolower)
 
 
-#print(census_df)
+print(census_df)
 
 ```
 
@@ -165,20 +163,63 @@ census_df <- census_df %>%
 #detach("package:MASS", unload = TRUE)
 library(dplyr, warn.conflicts = FALSE)
 
+```
+
+
+```{r}
+
+# Keeps all rows from firearm_mortality_data and fills in NA for missing matches in state_abbreviation
+state_overview_df <- state_overview_df %>%
+  left_join(state_abbreviation_df, by = c("state" = "state"))
+
+mortality_breakdown_df <- mortality_breakdown_df %>%
+  left_join(state_abbreviation_df, by = c("code" = "code"))
+
 firearm_mortality_data <- firearm_mortality_data %>%
   left_join(state_abbreviation_df, by = c("code" = "code"))
+
+firearm_laws_df <- firearm_laws_df %>%
+  left_join(state_abbreviation_df, by = c("state" = "state"))
+
+#mortality_breakdown_df
+#firearm_mortality_data
+#state_abbreviation_df
+#state_overview_df
+firearm_laws_df
+
+```
+
+
+
+```{r}
+library(tidyverse)
+
+#firearm_mortality_data
+state_overview_df
+#firearm_laws_df
 
 ```
 
 ## More Gun Laws Lead to Fewer Firearm Deaths?
 
--   This bar plot will shows that states with overall more permit laws have lower firearm death rates.
+-   This scatter plot will shows that states with overall more gun laws have lower firearm death rates.
+-   The red regression line trends downward, it suggests that more gun laws lead to fewer firearm deaths.
+
+
 
 ```{r}
 firearm_mortality_data <- firearm_mortality_data %>%
   left_join(firearm_laws_df, by = c("state" = "state"))
-#firearm_mortality_data
+firearm_mortality_data
 
+```
+
+## Impact of Stricter Firearm Permit Laws
+
+-   This graph shows the firearm mortality rate by state in the United States for 2022, with states ordered from highest to lowest mortality rates.
+
+
+```{r}
 # Filter for year 2022
 firearm_data_2022 <- firearm_mortality_data %>% 
   filter(year.x == 2022)
@@ -198,16 +239,19 @@ ggplot(firearm_data_2022, aes(x = reorder(state, -rate), y = rate, fill = permit
 ```
 ## Key observations:
 
--   Mississippi has the highest firearm mortality rate (approximately 30 deaths per 100,000 population), followed by Louisiana and Alabama.
--   This appears to represent the strictness of gun permit laws, with lighter colors indicating stricter permit requirements.
--   There's a noticeable pattern where many states with higher mortality rates (mostly dark blue) have less restrictive permit laws (0.00), while states with lower mortality rates (toward the right side of the graph) tend to have more restrictive permit laws (lighter blue).
--   The lowest firearm mortality rates are seen in Rhode Island, Massachusetts, Hawaii, New Jersey, and New York - all of which appear to have stricter permit laws as indicated by their lighter blue coloring.
--   There are some exceptions to this pattern, suggesting that other factors beyond permit laws also influence firearm mortality rates.
--   This visualization suggests a potential correlation between stricter permit laws and lower firearm mortality rates, though correlation doesn't necessarily imply causation.
+Mississippi has the highest firearm mortality rate (approximately 30 deaths per 100,000 population), followed by Louisiana and Alabama.
+States are color-coded by their permit law status, indicated by a gradient from dark blue (0.00) to light blue (1.00). This appears to represent the strictness of gun permit laws, with lighter colors indicating stricter permit requirements.
+There's a noticeable pattern where many states with higher mortality rates (mostly dark blue) have less restrictive permit laws (0.00), while states with lower mortality rates (toward the right side of the graph) tend to have more restrictive permit laws (lighter blue).
+The lowest firearm mortality rates are seen in Rhode Island, Massachusetts, Hawaii, New Jersey, and New York - all of which appear to have stricter permit laws as indicated by their lighter blue coloring.
+There are some exceptions to this pattern, suggesting that other factors beyond permit laws also influence firearm mortality rates.
+This visualization suggests a potential correlation between stricter permit laws and lower firearm mortality rates, though correlation doesn't necessarily imply causation.
 
-## Strict Gun Laws have Lower Firearm Death Rates
+
+
+## The Regression Model Interpretation:
 
 -   The regression model and scatter plots confirm that states with stricter gun laws (higher LAWTOTAL scores) tend to have lower firearm death rates.
+-   States requiring handgun permits (PERMITH \~= 1) show fewer deaths, while states without permit requirements see higher firearm mortality.
 
 ```{r}
 
@@ -222,15 +266,17 @@ firearm_mortality_data %>% filter(year.x == 2022) %>% ggplot(aes(x = lawtotal, y
 
 
 ```
-## Key Findings:
-
--   Negative Correlation – States with more gun laws (higher LAW TOTAL values) tend to have lower firearm death rates, as shown by the downward-sloping red trend line.
--   Data Distribution – States with fewer gun laws shows higher firearm death rates, while states with more restrictive gun laws shows lower firearm-related deaths.
 
 ## Handgun Permit Laws Reduce Firearm Deaths?
 
--   This compares firearm deaths in states that require a handgun permit vs those that don't.
--   This shows states that require a handgun permit has a lower median death rate, and reduced firearm deaths.
+-   This compares firearm deaths in states that require a handgun permit (PERMITH \~= 1) vs those that don't (PERMITH \~= 0).
+-   This shows (PERMITH \~= 1) has a lower median death rate, it suggests that handgun permit laws reduce firearm deaths.
+
+## Key Observations:
+
+-   The blue boxplot (states requiring permits) has a lower median firearm death rate compared to the red boxplot (no permit required).
+-   This suggests that states with handgun permit laws may have fewer firearm deaths on average.
+-   Wider Spread of Death Rates in non-permit states (Red)
 
 ```{r}
 
@@ -245,19 +291,98 @@ firearm_mortality_data %>% filter(year.x ==2022)%>% filter(year.x == 2022, !is.n
   theme(legend.position = "top", text = element_text(size = 14))
 
 ```
-## Ket Findings:
+## Deaths Variability in Permit/Non-Permit States
 
--   No handgun permit required states has a wider interquartile range and more extreme outliers indicating higher variability in firearm death rates.
+-   No permit required states has a wider interquartile range and more extreme outliers indicating higher variability in firearm death rates.
 -   The permit required states shows a more compact distribution with fewer extreme outliers suggesting handgun permit laws tend to lower firearm death rates.
+
+## Strong Positive Correlation b/w Poverty and Firearm Deaths
+
+-   The scatter plot below shows a strong positive correlation between poverty and firearm deaths.
+-   States with higher poverty levels tend to experience more gun-related fatalities, suggesting that economic hardship contributes to gun violence.
+
+
+```{r}
+# Load required libraries
+library(ggplot2)
+library(dplyr)
+
+
+firearm_mortality_data %>% filter(year.x ==2022)%>% filter(year.x == 2022, !is.na(state))
+
+firearm_mortality_data <- firearm_mortality_data %>%
+  left_join(census_df, by = c("state" = "name")) %>% mutate(firearm_mortality_data, per_capita_poverty = (poverty_count/population)*100)
+
+#print(firearm_mortality_data)
+
+# Create a scatter plot with trend line
+firearm_mortality_data %>% ggplot(aes(x = per_capita_poverty, y = rate)) +
+  geom_point(aes(color = per_capita_poverty), size = 3, alpha = 0.7) +  # Scatter plot points
+  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed", size = 1.2) +  # Regression line
+  scale_color_gradient(low = "blue", high = "red") +  # Color scale
+  theme_minimal(base_size = 14) +
+  labs(title = "Firearm Deaths vs Poverty",
+       subtitle = "Strong Positive Correlation between Poverty and Firearm Deaths",
+       x = "Per Capita Poverty",
+       y = "Firearm Deaths Rate",
+       color = "Poverty Level") +
+  theme(
+    panel.grid.major = element_line(color = "gray85"),
+    panel.grid.minor = element_blank(),
+    legend.position = "right"
+  )
+
+```
 
 ## Do Permit Laws have Potential Protective Effect?
 
--   Permit laws appear to be correlated with lower overall firearm mortality and suicide rates.
+-   The boxplot visualizes the relationship between permit laws (PERMITLAW: 0 \~= No), 1 \~= Yes) and death rates.
+
+```{r}
+
+# Boxplot with jittered points
+firearm_mortality_data %>% filter(year.x ==2022)%>% filter(year.x == 2022, !is.na(permitlaw))%>%ggplot(aes(x = as_factor(permitlaw), y = rate, fill = permitlaw))+
+  geom_boxplot(outlier.shape = NA, alpha = 0.5) +  # Boxplot with transparent fill
+  geom_jitter(aes(color = permitlaw), width = 0.2, alpha = 0.6, size = 2) +  # Jittered points
+  labs(
+    title = "Impact of Permit Laws on Death Rates",
+    subtitle = "Permit Laws and Gun-Related Death Rates – A Potential Protective Effect?",
+    x = "Permit Law (0 = No, 1 = Yes)",
+    y = "Death Rate"
+  ) +
+  #scale_fill_manual(values = c("#F8766D", "#00BFC4")) +  # Fix color mapping
+  #scale_color_manual(values = c("#F8766D", "#00BFC4")) +  # Fix jitter colors
+  theme_minimal() +
+  theme(legend.position = "none")  # Remove redundant legend
+
+
+```
+##  Lower Median Death Rates in States with Permit Laws 
+
+-   The central line inside each box represents the median (middle value).
+-   If the median for PERMITLAW = 1 (states with permit laws) is lower than for PERMITLAW = 0, this suggests that permit laws might be associated with lower death rates.
+-   Conversely, if they are similar, it suggests no strong association.
+
+##  Wider Interquartile Range without Permit Laws States
+
+-   The height of each box represents the middle 50% of data (IQR).
+-   If PERMITLAW = 0 has a larger spread, it suggests more variation in death rates in states without permit laws.
+-   A smaller spread for PERMITLAW = 1 could indicate that states with permit laws have more consistent (and possibly lower) death rates.
+
+## More Outliers without Permit Laws States
+
+-   The jittered points (dots) represent individual states.
+-   If many high death rate outliers appear in the PERMITLAW = 0 group, it suggests that states without permit laws might experience more extreme cases of high gun-related deaths.
+
+```{r}
+mortality_breakdown_df
+```
+
 
 ```{r}
 # First join the datasets
 firearm_mortality_data <- firearm_mortality_data %>%
- left_join(mortality_breakdown_df, by = c("code" = "code"))
+  left_join(mortality_breakdown_df, by = c("code.x" = "code"))
 
 # Then filter data for 2022
 data_2022 <- firearm_mortality_data %>% 
@@ -266,21 +391,21 @@ data_2022 <- firearm_mortality_data %>%
 # Create three separate plots with state dots
 p1 <- ggplot(data_2022, aes(x = factor(permitlaw), y = rate, fill = factor(permitlaw))) +
   geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-  geom_jitter(aes(text = state), width = 0.2, alpha = 0.7, size = 2) +
+  geom_jitter(aes(text = state.x), width = 0.2, alpha = 0.7, size = 2) +
   labs(title = "Overall Rate") +
   theme_minimal() +
   theme(legend.position = "none")
 
 p2 <- ggplot(data_2022, aes(x = factor(permitlaw), y = suicide_rate, fill = factor(permitlaw))) +
   geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-  geom_jitter(aes(text = state), width = 0.2, alpha = 0.7, size = 2) +
+  geom_jitter(aes(text = state.x), width = 0.2, alpha = 0.7, size = 2) +
   labs(title = "Suicide Rate") +
   theme_minimal() +
   theme(legend.position = "none")
 
 p3 <- ggplot(data_2022, aes(x = factor(permitlaw), y = homicide_rate, fill = factor(permitlaw))) +
   geom_boxplot(alpha = 0.7, outlier.shape = NA) +
-  geom_jitter(aes(text = state), width = 0.2, alpha = 0.7, size = 2) +
+  geom_jitter(aes(text = state.x), width = 0.2, alpha = 0.7, size = 2) +
   labs(title = "Homicide Rate") +
   theme_minimal() +
   theme(legend.position = "none")
@@ -290,67 +415,5 @@ library(gridExtra)
 grid.arrange(p1, p2, p3, ncol = 3, 
              top = "Firearm Mortality Rates by Permit Law Status (2022)")
 ```
-## Key Observations:
 
--   States with permit laws show lower median mortality rates and a tighter range of data.
--   Unlike suicide rates, firearm homicide rates are higher in states with permit laws.
--   Homicide rates are higher in states with permit laws, possibly due to factors such as urbanization, crime rates, or other policy differences beyond permit requirements.
--   Firearm deaths are influenced by multiple social, economic, and legislative factors, and while permit laws might play a role, other contributing elements should be considered.
 
-## Strong Positive Correlation between Poverty and Firearm Mortality Rate
-
--   The scatter plot below shows a strong positive correlation between poverty and overall firearm mortality rates.
--   States with higher poverty levels tend to experience more gun-related fatalities, suggesting that economic hardship contributes to gun violence.
-
-```{r}
-
-firearm_mortality_data <- firearm_mortality_data %>% filter(year.x == 2022, !is.na(state))
-
-firearm_mortality_data <- firearm_mortality_data %>%
-  left_join(census_df, by = c("state" = "name")) %>% mutate(firearm_mortality_data, per_capita_poverty = (poverty_count/population)*100)
-
-# Create a scatter plot with trend line
-firearm_mortality_data %>% ggplot(aes(x = per_capita_poverty, y = rate)) +
-  geom_point(aes(color = per_capita_poverty), size = 3, alpha = 0.7) +  # Scatter plot points
-  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed", size = 1.2) +  # Regression line
-  scale_color_gradient(low = "blue", high = "red") +  # Color scale
-  theme_minimal(base_size = 14) +
-  labs(title = "Firearm Mortality Rate vs Poverty",
-       subtitle = "Strong Positive Correlation between Poverty and Firearm Mortality Rate",
-       x = "Per Capita Poverty",
-       y = "Firearm Mortality Rate",
-       color = "Poverty Level") +
-  theme(
-    panel.grid.major = element_line(color = "gray85"),
-    panel.grid.minor = element_blank(),
-    legend.position = "right"
-  )
-
-```
-## Investigating Higher Homicide Rates in States with Permit Laws
-
--   A scatter plot with trend line is showing strong positive correlation b/w homicide rate and per capita poverty
-
-```{r}
-# Create a scatter plot with trend line
-firearm_mortality_data %>% ggplot(aes(x = per_capita_poverty, y = homicide_rate)) +
-  geom_point(aes(color = per_capita_poverty), size = 3, alpha = 0.7) +  # Scatter plot points
-  geom_smooth(method = "lm", se = FALSE, color = "black", linetype = "dashed", size = 1.2) +  # Regression line
-  scale_color_gradient(low = "blue", high = "red") +  # Color scale
-  theme_minimal(base_size = 14) +
-  labs(title = "Firearm Homicide Rate vs Poverty",
-       subtitle = "Strong Positive Correlation between Poverty and Firearm Homicide Rate",
-       x = "Per Capita Poverty",
-       y = "Firearm Homicide Rate",
-       color = "Poverty Level") +
-  theme(
-    panel.grid.major = element_line(color = "gray85"),
-    panel.grid.minor = element_blank(),
-    legend.position = "right"
-  )
-```
-## Key Findings:
-
--   Positive Correlation – As per capita poverty increases, firearm homicide rates also tend to rise, suggesting a potential link between economic hardship and gun violence.
-
--   Data Distribution – States with higher poverty levels (red points) shows higher firearm homicide rates, while those with lower poverty levels (blue points) shows lower homicide rates, as indicated by the upward-sloping trend line.

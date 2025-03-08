@@ -339,77 +339,92 @@ Mubashira Qari
 
   <p class="date">2025-02-23</p>
 </section>
-<section class="slide level2">
-
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code> [1] "GEOID"              "NAME"               "population"        
- [4] "B01003_001M"        "median_age"         "B01002_001M"       
- [7] "household_income"   "B19013_001M"        "per_capita_income" 
-[10] "B19301_001M"        "poverty_count"      "B17001_002M"       
-[13] "unemployment_count" "B23025_005M"       </code></pre>
-</div>
-</div>
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 6 × 14
-  GEOID NAME      population B01003_001M median_age B01002_001M household_income
-  &lt;chr&gt; &lt;chr&gt;          &lt;dbl&gt;       &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;            &lt;dbl&gt;
-1 42    Pennsylv…   12794885          NA       40.9         0.2            63627
-2 06    Californ…   39346023          NA       36.7         0.1            78672
-3 54    West Vir…    1807426          NA       42.7         0.2            48037
-4 49    Utah         3151239          NA       31.1         0.1            74197
-5 36    New York    19514849          NA       39           0.1            71117
-6 11    District…     701974          NA       34.1         0.1            90842
-# ℹ 7 more variables: B19013_001M &lt;dbl&gt;, per_capita_income &lt;dbl&gt;,
-#   B19301_001M &lt;dbl&gt;, poverty_count &lt;dbl&gt;, B17001_002M &lt;dbl&gt;,
-#   unemployment_count &lt;dbl&gt;, B23025_005M &lt;dbl&gt;</code></pre>
-</div>
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 6 × 14
-  Geoid Name      Population B01003_001m Median_age B01002_001m Household_income
-  &lt;chr&gt; &lt;chr&gt;          &lt;dbl&gt;       &lt;dbl&gt;      &lt;dbl&gt;       &lt;dbl&gt;            &lt;dbl&gt;
-1 42    Pennsylv…   12794885          NA       40.9         0.2            63627
-2 06    Californ…   39346023          NA       36.7         0.1            78672
-3 54    West Vir…    1807426          NA       42.7         0.2            48037
-4 49    Utah         3151239          NA       31.1         0.1            74197
-5 36    New York    19514849          NA       39           0.1            71117
-6 11    District…     701974          NA       34.1         0.1            90842
-# ℹ 7 more variables: B19013_001m &lt;dbl&gt;, Per_capita_income &lt;dbl&gt;,
-#   B19301_001m &lt;dbl&gt;, Poverty_count &lt;dbl&gt;, B17001_002m &lt;dbl&gt;,
-#   Unemployment_count &lt;dbl&gt;, B23025_005m &lt;dbl&gt;</code></pre>
-</div>
-</div>
+<section id="story--3-do-stricter-gun-laws-reduce-firearm-gun-deaths" class="slide level2">
+<h2>Story -3 : Do stricter gun laws reduce firearm gun deaths?</h2>
 </section>
-<section id="gun-laws-lawtotal-vs.-firearm-deaths-per100k_population_death" class="slide level2">
-<h2>Gun Laws (LAWTOTAL) vs.&nbsp;Firearm Deaths (per100k_population_death)</h2>
+<section id="more-gun-laws-lead-to-fewer-firearm-deaths" class="slide level2">
+<h2>More Gun Laws Lead to Fewer Firearm Deaths?</h2>
 <ul>
-<li>This scatter plot will shows that states with more gun laws have lower firearm death rates.</li>
-<li>The red regression line trends downward, it suggests that more gun laws lead to fewer firearm deaths.</li>
+<li>This bar plot will shows that states with overall more permit laws have lower firearm death rates.</li>
+</ul>
+
+<img data-src="Story3_Data608_files/figure-revealjs/unnamed-chunk-9-1.png" width="960" class="r-stretch"></section>
+<section id="key-observations" class="slide level2">
+<h2>Key observations:</h2>
+<ul>
+<li>Mississippi has the highest firearm mortality rate (approximately 30 deaths per 100,000 population), followed by Louisiana and Alabama.</li>
+<li>This appears to represent the strictness of gun permit laws, with lighter colors indicating stricter permit requirements.</li>
+<li>There’s a noticeable pattern where many states with higher mortality rates (mostly dark blue) have less restrictive permit laws (0.00), while states with lower mortality rates (toward the right side of the graph) tend to have more restrictive permit laws (lighter blue).</li>
+<li>The lowest firearm mortality rates are seen in Rhode Island, Massachusetts, Hawaii, New Jersey, and New York - all of which appear to have stricter permit laws as indicated by their lighter blue coloring.</li>
+<li>There are some exceptions to this pattern, suggesting that other factors beyond permit laws also influence firearm mortality rates.</li>
+<li>This visualization suggests a potential correlation between stricter permit laws and lower firearm mortality rates, though correlation doesn’t necessarily imply causation.</li>
+</ul>
+</section>
+<section id="strict-gun-laws-have-lower-firearm-death-rates" class="slide level2">
+<h2>Strict Gun Laws have Lower Firearm Death Rates</h2>
+<ul>
+<li>The regression model and scatter plots confirm that states with stricter gun laws (higher LAWTOTAL scores) tend to have lower firearm death rates.</li>
 </ul>
 
 <img data-src="Story3_Data608_files/figure-revealjs/unnamed-chunk-10-1.png" width="960" class="r-stretch"></section>
-<section id="firearm-deaths-by-permith-handgun-permit-laws" class="slide level2">
-<h2>Firearm Deaths by PERMITH (Handgun Permit Laws)</h2>
+<section id="key-findings" class="slide level2">
+<h2>Key Findings:</h2>
 <ul>
-<li>This compares firearm deaths in states that require a handgun permit (PERMITH = 1) vs.&nbsp;those that don’t (PERMITH = 0).</li>
-<li>PERMITH = 1 has a lower median death rate, it suggests that handgun permit laws reduce firearm deaths.</li>
+<li>Negative Correlation – States with more gun laws (higher LAW TOTAL values) tend to have lower firearm death rates, as shown by the downward-sloping red trend line.</li>
+<li>Data Distribution – States with fewer gun laws shows higher firearm death rates, while states with more restrictive gun laws shows lower firearm-related deaths.</li>
+</ul>
+</section>
+<section id="handgun-permit-laws-reduce-firearm-deaths" class="slide level2">
+<h2>Handgun Permit Laws Reduce Firearm Deaths?</h2>
+<ul>
+<li>This compares firearm deaths in states that require a handgun permit vs those that don’t.</li>
+<li>This shows states that require a handgun permit has a lower median death rate, and reduced firearm deaths.</li>
 </ul>
 
 <img data-src="Story3_Data608_files/figure-revealjs/unnamed-chunk-11-1.png" width="960" class="r-stretch"></section>
-<section id="analyzing-the-correlation-between-poverty-and-firearm-deaths" class="slide level2">
-<h2>Analyzing the correlation between poverty and firearm deaths:</h2>
+<section id="ket-findings" class="slide level2">
+<h2>Ket Findings:</h2>
 <ul>
-<li>The scatter plot shows a strong positive correlation between per capita poverty and firearm deaths.</li>
-<li>States with higher poverty levels tend to experience more gun-related fatalities, suggesting that economic hardship contributes to gun violence.</li>
+<li>No handgun permit required states has a wider interquartile range and more extreme outliers indicating higher variability in firearm death rates.</li>
+<li>The permit required states shows a more compact distribution with fewer extreme outliers suggesting handgun permit laws tend to lower firearm death rates.</li>
+</ul>
+</section>
+<section id="do-permit-laws-have-potential-protective-effect" class="slide level2">
+<h2>Do Permit Laws have Potential Protective Effect?</h2>
+<ul>
+<li>Permit laws appear to be correlated with lower overall firearm mortality and suicide rates.</li>
 </ul>
 
 <img data-src="Story3_Data608_files/figure-revealjs/unnamed-chunk-12-1.png" width="960" class="r-stretch"></section>
-<section id="the-regression-model-interpretation" class="slide level2">
-<h2>The Regression Model Interpretation:</h2>
+<section id="key-observations-1" class="slide level2">
+<h2>Key Observations:</h2>
 <ul>
-<li>The regression model and scatter plots confirm that states with stricter gun laws (higher LAWTOTAL scores) tend to have lower firearm death rates.</li>
-<li>States requiring handgun permits (PERMITH = 1) show fewer deaths, while states without permit requirements see higher firearm mortality.</li>
+<li>States with permit laws show lower median mortality rates and a tighter range of data.</li>
+<li>Unlike suicide rates, firearm homicide rates are higher in states with permit laws.</li>
+<li>Homicide rates are higher in states with permit laws, possibly due to factors such as urbanization, crime rates, or other policy differences beyond permit requirements.</li>
+<li>Firearm deaths are influenced by multiple social, economic, and legislative factors, and while permit laws might play a role, other contributing elements should be considered.</li>
+</ul>
+</section>
+<section id="strong-positive-correlation-between-poverty-and-firearm-mortality-rate" class="slide level2">
+<h2>Strong Positive Correlation between Poverty and Firearm Mortality Rate</h2>
+<ul>
+<li>The scatter plot below shows a strong positive correlation between poverty and overall firearm mortality rates.</li>
+<li>States with higher poverty levels tend to experience more gun-related fatalities, suggesting that economic hardship contributes to gun violence.</li>
+</ul>
+
+<img data-src="Story3_Data608_files/figure-revealjs/unnamed-chunk-13-1.png" width="960" class="r-stretch"></section>
+<section id="investigating-higher-homicide-rates-in-states-with-permit-laws" class="slide level2">
+<h2>Investigating Higher Homicide Rates in States with Permit Laws</h2>
+<ul>
+<li>A scatter plot with trend line is showing strong positive correlation b/w homicide rate and per capita poverty</li>
+</ul>
+
+<img data-src="Story3_Data608_files/figure-revealjs/unnamed-chunk-14-1.png" width="960" class="r-stretch"></section>
+<section id="key-findings-1" class="slide level2">
+<h2>Key Findings:</h2>
+<ul>
+<li><p>Positive Correlation – As per capita poverty increases, firearm homicide rates also tend to rise, suggesting a potential link between economic hardship and gun violence.</p></li>
+<li><p>Data Distribution – States with higher poverty levels (red points) shows higher firearm homicide rates, while those with lower poverty levels (blue points) shows lower homicide rates, as indicated by the upward-sloping trend line.</p></li>
 </ul>
 <div class="quarto-auto-generated-content">
 <div class="footer footer-default">
