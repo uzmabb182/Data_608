@@ -189,7 +189,6 @@ new_df <- new_df %>%
 
 ```
 
-
 ```{r}
  
 # Load necessary libraries
@@ -220,7 +219,6 @@ ggplot(data_long, aes(x = reorder(state_name, -Percentage), y = Percentage, fill
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5)) 
 ```
-
 
 ## Analysis: {.smaller}
 
@@ -278,7 +276,7 @@ ggplot(new_df, aes(x = reorder(state_name, -funding_per_state_percentage),
 -   Only a few states (in green) receive equitable funding, showing that a minority of states benefit from a fair allocation.
 -   Larger states (e.g., California, Texas, New York, and Florida) receive the highest funding but are still marked as inequitable, suggesting potential over- or under-funding issues.
 -   The disparities decrease as you move to the right, with smaller states receiving smaller portions of funding.
--   The chart visually communicates that federal funding is not evenly or fairly distributed across states. 
+-   The chart visually communicates that federal funding is not evenly or fairly distributed across states.
 -   Only a few states receive equitable funding, while the majority experience disparities, either receiving too much or too little compared to what is considered fair.
 
 ## Does the allocation favor the political interests of the Biden administration? {.smaller}
@@ -314,14 +312,14 @@ ggplot(new_df, aes(x = reorder(state_name, -funding_per_state_percentage),
   )
 
 ```
+
 ## Interpretation: {.smaller}
 
 -   The chart examines federal funding bias across U.S. states, highlighting whether certain states receive disproportionate allocations. The color coding represents bias:
--   While high-funding states (like California, Texas, and New York) receive large allocations, they are marked in green, indicating no bias. However, some middle-ranked states are marked in orange, meaning they receive disproportionate funding. 
+-   While high-funding states (like California, Texas, and New York) receive large allocations, they are marked in green, indicating no bias. However, some middle-ranked states are marked in orange, meaning they receive disproportionate funding.
 -   The lowest-funded states generally do not show bias, meaning their smaller funding levels remain proportionate.
 -   Green ("No") – These states do not receive biased funding, meaning their allocations are fair or proportionate.
 -   Orange ("Yes") – These states receive biased funding, suggesting they are either overfunded or underfunded relative to expected criteria (such as population, economic contribution, or need).
-
 
 ## Key Observations: {.smaller}
 
@@ -329,7 +327,6 @@ ggplot(new_df, aes(x = reorder(state_name, -funding_per_state_percentage),
 -   Some middle-ranked states are marked as biased (orange), meaning they receive either excessive or insufficient funding compared to expectations.
 -   The lowest-funded states (far right) generally do not show bias, suggesting that their allocations, while small, are proportionate.
 -   Bias in funding is not necessarily tied to the total amount received but rather to whether the allocation is fair relative to a certain standard.
-
 
 ```{r}
 library(dplyr)  # Ensure dplyr is loaded
@@ -348,7 +345,6 @@ group_df <- new_df %>% dplyr::select(state_name, funding_billions, popestimate20
 
 
 ```
-
 
 ```{r}
 
@@ -417,12 +413,12 @@ ggplot(grouped_long, aes(x = Group, y = Percentage, fill = Metric)) +
 -   Chart 1 (Disparities): Most states receive inequitable funding—few states get exactly what they should.
 -   Chart 2 (Bias): Large states get what they deserve, but some middle-ranked states receive disproportionate funding.
 -   Chart 3 (Politics): Trump-won states receive more federal funding relative to their population, while Biden-won states receive slightly less than their share.
--   Federal funding should be allocated fairly based on population size and need, but does that actually happen? 
--   The first chart shows most states receive inequitable funding, meaning some get more or less than they should. 
--   The second chart digs deeper, revealing bias in funding is concentrated in mid-level states, while large states receive appropriate funding. 
+-   Federal funding should be allocated fairly based on population size and need, but does that actually happen?
+-   The first chart shows most states receive inequitable funding, meaning some get more or less than they should.
+-   The second chart digs deeper, revealing bias in funding is concentrated in mid-level states, while large states receive appropriate funding.
 -   But the final chart introduces another twist—Trump-won states receive more funding relative to their population, while Biden-won states receive slightly less than their share.
--   So, is the system fair? Not entirely. While population plays a role, it is not the sole factor in determining funding distribution. 
--   The data suggests that political alignment may influence federal allocations, with Republican-leaning states receiving a larger share of funding than their population percentage alone would justify. 
+-   So, is the system fair? Not entirely. While population plays a role, it is not the sole factor in determining funding distribution.
+-   The data suggests that political alignment may influence federal allocations, with Republican-leaning states receiving a larger share of funding than their population percentage alone would justify.
 -   Whether this is due to policy priorities, historical trends, or deliberate decisions remains open for debate.
 
 ## Big Idea Summary {.smaller}
