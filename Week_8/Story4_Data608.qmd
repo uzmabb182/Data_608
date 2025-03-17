@@ -24,18 +24,10 @@ library(viridis) # For color scales
 
 # Loading Dataset
 
+airbnb_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_8/nyc_airbnb_listings.csv")
 
 
-state_overview_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/State_Overview-2019-2023.csv")
-
-firearm_laws_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/firearm_laws.csv")
-
-mortality_breakdown_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/mortality_breakdown.csv")
-
-firearm_mortality_data <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/firearm_mortality2022.csv")
-
-state_abbreviation_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_6/states_abbreviations.csv")
-
+head(airbnb_df)
 
 ```
 
