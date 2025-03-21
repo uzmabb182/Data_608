@@ -4,10 +4,13 @@ author: "Mubashira Qari"
 format: revealjs
 editor: visual
 ---
+
+
+
 ```{r, warning = FALSE, message = FALSE}
 # echo=FALSE, include=FALSE
 
-library(dplyr)
+library(knitr)
 library(tidyverse)
 library(readxl)
 library(ggplot2)
@@ -18,16 +21,472 @@ library(tidyr)
 library(ggplot2)
 library(dplyr)
 library(usmap)   # For U.S. map plotting
-library(sf)      # For spatial data handling 
+library(sf)         # Spatial data
+library(geojsonsf)  # GeoJSON handling
 library(viridis) # For color scales
 
 
 # Loading Dataset
 
 airbnb_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_8/nyc_airbnb_listings.csv")
-
+nyc_geo <- st_read("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_8/neighbourhoods.geojson")
 
 head(airbnb_df)
 
 ```
+
+```{r}
+# Quick summary
+#str(airbnb_df)
+#summary(airbnb_df)
+#summary(nyc_geo)
+# Check structure
+glimpse(airbnb_df)
+glimpse(nyc_geo)
+```
+
+
+```{r}
+# Check the differences between datasets
+setdiff(nyc_geo$neighbourhood, airbnb_df$neighborhood)
+
+
+```
+
+```{r}
+colnames(airbnb_df)
+nrow(airbnb_df)
+#nrow(nyc_geo)
+```
+
+
+```{r}
+# Check for Duplicates
+airbnb_df %>%
+  count(neighborhood) %>%
+  arrange(desc(n))
+
+
+```
+
+
+```{r}
+library(sf)
+
+# Check if there are invalid geometries
+invalid_geometries <- nyc_geo[!st_is_valid(nyc_geo), ]
+
+#print(invalid_geometries)
+
+
+
+```
+
+
+```{r}
+# Remove Duplicate or Empty Geometries
+
+nyc_geo <- nyc_geo %>%
+  filter(st_is_valid(geometry), !st_is_empty(geometry))
+
+nyc_geo %>%
+  count(neighbourhood) %>%
+  arrange(desc(n))
+
+# If duplicate neighborhoods exist, keep only one row per neighborhood
+
+nyc_geo <- nyc_geo %>%
+  distinct(neighbourhood, .keep_all = TRUE)
+
+
+```
+```{r}
+# Before merging, ensure that both datasets have matching column names for neighborhoods.
+#colnames(nyc_geo)   # Check column names in nyc_geo
+colnames(airbnb_df) # Check column names in airbnb_df
+
+```
+
+### Step 1: Defining Business Question
+
+Task is to analyze NYC Airbnb listings, determine what drives revenue and occupancy, and present insights in a clear, data-driven slideshow.
+
+Where are the best investment opportunities? (Identify high-potential but undervalued listings.)
+How can underperforming hosts improve? (Identify common mistakes & provide actionable advice.)
+Why should new hosts list on Airbnb? (Highlight profitable areas & market demand.)
+
+### Summarize airbnb_df to Aggregate Data by Neighborhood
+
+```{r}
+# Since airbnb_df has multiple listings per neighborhood, we need to summarize it before merging
+library(dplyr)
+
+# Aggregate Airbnb data at the neighborhood level
+airbnb_summary <- airbnb_df %>%
+  group_by(neighborhood) %>%
+  summarise(
+    avg_price = mean(price, na.rm = TRUE),
+    total_listings = n(),
+    avg_revenue = mean(revenue, na.rm = TRUE),
+    avg_occupancy = mean(occupancy, na.rm = TRUE)
+  )
+
+airbnb_summary
+```
+
+```{r}
+# If these neighborhoods genuinely have no Airbnb listings, it’s best to keep the NA values after merging
+nyc_geo <- nyc_geo %>%
+  left_join(airbnb_summary, by = c("neighbourhood" = "neighborhood"))
+
+summary(nyc_geo)
+
+```
+```{r}
+# Assign Zero Values for Airbnb Metrics
+
+nyc_geo <- nyc_geo %>%
+  mutate(
+    avg_price = replace_na(avg_price, 0),
+    total_listings = replace_na(total_listings, 0),
+    avg_revenue = replace_na(avg_revenue, 0),
+    avg_occupancy = replace_na(avg_occupancy, 0)
+  )
+
+nyc_geo
+```
+
+```{r}
+# Investigate Possible Naming Differences
+unique(airbnb_df$neighborhood)
+
+```
+```{r}
+# Since Airbnb has multiple listings per neighborhood, first calculate the average price per neighborhood
+
+library(dplyr)
+
+# Calculate average price per neighborhood
+price_summary <- airbnb_df %>%
+  group_by(neighborhood) %>%
+  summarise(avg_price = mean(price, na.rm = TRUE)) %>%
+  arrange(desc(avg_price))  # Sort from highest to lowest price
+
+price_summary
+```
+
+
+## Airbnb Listings Density Map
+
+```{r}
+# Map the Merged Data
+
+library(ggplot2)
+
+ggplot(nyc_geo) +
+  geom_sf(aes(fill = total_listings), color = "white") +
+  scale_fill_viridis_c(option = "plasma", na.value = "gray90") +
+  theme_minimal() +
+  labs(title = "Number of Airbnb Listings by NYC Neighborhood", fill = "Total Listings")
+
+
+```
+
+## Average Rent per Night by Neighbourhood Group
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+# Calculate average price per night by neighbourhood group
+avg_price_per_group <- airbnb_df %>%
+  group_by(neighbourhood_group) %>%
+  summarise(avg_price = mean(price, na.rm = TRUE)) %>%
+  arrange(desc(avg_price))  # Sort by highest average price
+
+# View results
+#print(avg_price_per_group)
+
+# Bar chart of average price per neighbourhood group
+ggplot(avg_price_per_group, aes(x = reorder(neighbourhood_group, -avg_price), y = avg_price, fill = neighbourhood_group)) +
+  geom_col() +
+  theme_minimal() +
+  labs(
+    title = "Average Rent per Night by Neighbourhood Group",
+    x = "Neighbourhood Group",
+    y = "Average Price ($ per Night)"
+  ) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))  # Rotate x-axis for better readability
+
+
+
+```
+Business Suggestions:
+
+Some Neighbourhood Groups Have Significantly Higher Prices: highlight premium amenities to justify the price
+Lower-Priced Neighbourhoods May Attract Budget Travelers: Hosts should focus on volume (more bookings) and offering discounts for longer stays.
+Low-priced areas: Improve listing quality (better photos, amenities) to compete with premium areas.
+
+## A heatmap of Airbnb revenue across NYC neighborhoods to highlight high- and low-performing areas.
+
+-  Some neighborhoods may have low demand, leading to low revenue.
+-  High-revenue areas can guide where to invest in Airbnb.
+
+```{r}
+
+
+library(ggplot2)
+
+ggplot(nyc_geo) +
+  geom_sf(aes(fill = avg_revenue), color = "white") +
+  scale_fill_viridis_c(option = "magma", na.value = "gray90") +
+  theme_minimal() +
+  labs(
+    title = "Airbnb Revenue Across NYC Neighborhoods",
+    fill = "Avg. Revenue ($)"
+  )
+
+
+
+```
+```{r}
+max_occupancy <- max(airbnb_df$occupancy, na.rm = TRUE)
+min_occupancy <- min(airbnb_df$occupancy, na.rm = TRUE)
+max_revenue <- max(airbnb_df$revenue, na.rm = TRUE)
+min_revenue <- min(airbnb_df$revenue, na.rm = TRUE)
+
+cat("Max Occupancy:", max_occupancy, "\nMin Occupancy:", min_occupancy,
+    "\nMax Revenue:", max_revenue, "\nMin Revenue:", min_revenue)
+
+```
+
+
+## A scatter plot comparing pricing vs. occupancy rate, identifying overpriced and underpriced listings.
+
+Overpriced listings (high price, low occupancy) should adjust pricing.
+Underpriced listings (low price, high occupancy) could increase prices.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Define price bins (ensure NA values are handled) and Creates a new column price_category based on price values.
+airbnb_df <- airbnb_df %>%
+  mutate(price_category = case_when(
+    price <= 50   ~ "Very Low ($0 - $50)",
+    price <= 150  ~ "Low ($51 - $150)",
+    price <= 300  ~ "Medium ($151 - $300)",
+    price <= 600  ~ "High ($301 - $600)",
+    price > 600   ~ "Very High ($601+)",
+    is.na(price)  ~ NA_character_  # Ensure missing values stay NA
+  ))
+
+# filters out listings where price_category is NA, ensuring only valid prices are analyzed.
+airbnb_df <- airbnb_df %>%
+  filter(!is.na(price_category))
+
+# Order price categories correctly 
+# Groups the dataset (airbnb_df) by the price_category column (e.g., "Low", "Medium", "High").
+# Computes summary statistics for each price_category:
+# avg_occupancy → Average occupancy rate in this price range.
+# avg_revenue → Average revenue in this price range.
+# count → Total number of listings in this price range.
+
+price_bins_summary <- airbnb_df %>%
+  group_by(price_category) %>%
+  summarise(avg_occupancy = mean(occupancy, na.rm = TRUE),
+            avg_revenue = mean(revenue, na.rm = TRUE),
+            count = n()) %>%
+  mutate(price_category = factor(price_category, levels = c(
+    "Very Low ($0 - $50)", "Low ($51 - $150)", "Medium ($151 - $300)",
+    "High ($301 - $600)", "Very High ($601+)"
+  )))  # Ensures the correct order
+
+# Improved Bar Chart
+ggplot(price_bins_summary, aes(x = price_category, y = avg_occupancy, fill = avg_revenue)) +
+  geom_col() +
+  scale_fill_viridis_c() +  
+  theme_minimal() +
+  labs(
+    title = "Average Occupancy Rate by Price Category",
+    x = "Price Category ($ per Night)",
+    y = "Average Occupancy Rate (%)",
+    fill = "Avg. Revenue ($)"
+  ) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))  # Rotate x-axis labels for clarity
+
+
+```
+Business Takeaways
+
+For Investors & Hosts:
+
+Lower-priced listings attract high occupancy, good for maximizing booking rates.
+Mid-range listings balance occupancy and revenue well.
+Luxury listings ($601+) make high revenue per booking, but require longer vacancy periods.
+
+For Pricing Strategy:
+
+Raising prices too much lowers occupancy significantly.
+Finding the right balance between price and demand is key.
+
+## A bar chart displaying how guest ratings impact revenue.
+
+This is the distribution of Airbnb revenue across different review rating categories. 
+
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# Define review rating bins
+airbnb_df <- airbnb_df %>%
+  mutate(review_category = case_when(
+    review_scores_rating < 2  ~ "Very Poor (0-2)",
+    review_scores_rating < 3  ~ "Poor (2-3)",
+    review_scores_rating < 4  ~ "Average (3-4)",
+    review_scores_rating < 4.5 ~ "Good (4-4.5)",
+    review_scores_rating >= 4.5 ~ "Excellent (4.5-5)",
+    is.na(review_scores_rating) ~ "No Rating"
+  ))
+
+# Remove NA values in revenue for proper visualization
+filtered_data <- airbnb_df %>%
+  filter(!is.na(revenue))  
+
+# Order the review categories properly
+filtered_data$review_category <- factor(filtered_data$review_category, 
+                                        levels = c("Very Poor (0-2)", "Poor (2-3)", 
+                                                   "Average (3-4)", "Good (4-4.5)", 
+                                                   "Excellent (4.5-5)", "No Rating"))
+
+# Create improved boxplot
+ggplot(filtered_data, aes(x = review_category, y = revenue, fill = review_category)) +
+  geom_boxplot(outlier.shape = 1, outlier.color = "black") +  # Boxplot with outliers
+  scale_y_continuous(limits = c(0, quantile(filtered_data$revenue, 0.99, na.rm = TRUE))) +  # Remove extreme outliers
+  scale_fill_viridis_d() +  # Improved color scheme
+  theme_minimal() +
+  labs(
+    title = "Impact of Reviews on Airbnb Revenue (Grouped Ratings)",
+    x = "Review Category",
+    y = "Revenue ($ per Month)",
+    fill = "Review Category"
+  ) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))  # Rotate x-axis labels for better readability
+
+
+
+```
+Key Observations
+ Higher Ratings Tend to Have Higher Revenue
+
+Listings in the "Excellent (4.5-5)" and "Good (4-4.5)" categories have higher median revenue compared to lower-rated properties.
+These properties also have a wider spread (higher variance) in revenue, meaning some highly rated listings earn significantly more.
+ Lower-Rated Listings Generate Less Revenue
+
+"Very Poor (0-2)" and "Poor (2-3)" categories have the lowest median revenue, indicating guests avoid low-rated properties.
+These listings show lower variability, meaning even the best-performing ones in these categories don’t earn much.
+ Many High-Rated Listings Have Outliers
+
+"Good (4-4.5)" and "Excellent (4.5-5)" categories have a large number of high-revenue outliers, showing that some well-rated listings earn exceptionally well.
+ Listings with No Ratings Perform Similarly to High-Rated Listings
+
+The "No Rating" category has a similar revenue distribution to high-rated properties.
+This suggests that new listings (without ratings) can still earn well, possibly due to strong location, amenities, or pricing strategies.
+
+
+## Business Implications for Hosts
+
+Hosts should improve ratings to increase revenue potential.
+New listings without ratings can still perform well if they are competitively priced and well-marketed.
+Some low-rated listings still make money, possibly due to prime locations or unique offerings.
+Pricing strategy should align with rating trends—low-rated listings may need discounts to compete.
+
+
+## A bar chart displaying how minimum stay restrictions impact revenue.
+
+Strict minimum stay rules (e.g., 30+ nights) hurt revenue.
+Listings with flexible stay policies tend to earn more.
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# Define bins for minimum nights required
+airbnb_df <- airbnb_df %>%
+  mutate(min_nights_category = case_when(
+    minimum_nights == 1 ~ "1 Night",
+    minimum_nights <= 3 ~ "2-3 Nights",
+    minimum_nights <= 7 ~ "4-7 Nights",
+    minimum_nights <= 29 ~ "8-29 Nights",
+    minimum_nights >= 30 ~ "30+ Nights"
+  ))
+
+# Filter out extreme values (e.g., 365+ nights) to improve readability
+filtered_data <- airbnb_df %>%
+  filter(minimum_nights <= 365, !is.na(revenue))  
+
+# Order the categories properly
+filtered_data$min_nights_category <- factor(filtered_data$min_nights_category, 
+                                            levels = c("1 Night", "2-3 Nights", 
+                                                       "4-7 Nights", "8-29 Nights", 
+                                                       "30+ Nights"))
+
+# Create improved boxplot
+ggplot(filtered_data, aes(x = min_nights_category, y = revenue, fill = min_nights_category)) +
+  geom_boxplot(outlier.shape = 1, outlier.color = "black") +  # Boxplot with outliers
+  scale_y_continuous(limits = c(0, quantile(filtered_data$revenue, 0.99, na.rm = TRUE))) +  # Remove extreme revenue outliers
+  scale_fill_viridis_d() +  # Improved color scheme
+  theme_minimal() +
+  labs(
+    title = "Impact of Minimum Stay Requirements on Revenue (Grouped)",
+    x = "Minimum Nights Required",
+    y = "Revenue ($ per Month)",
+    fill = "Minimum Nights Category"
+  ) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))  # Rotate x-axis labels for better readability
+
+
+```
+Interpretation of the Boxplot: Minimum Stay vs. Revenue
+⃣ Shorter stays (1-7 nights) generate higher revenue.
+
+"1 Night" and "2-3 Nights" categories have higher median revenue than longer stays.
+"4-7 Nights" has the widest spread, suggesting some high-earning listings.
+ Longer minimum stays (30+ nights) lead to lower revenue.
+
+The "30+ Nights" category has the lowest median revenue, likely due to fewer bookings.
+Some outliers (black dots) indicate a few long-term rentals still earn well.
+ More flexible minimum stay policies attract higher revenue.
+
+Listings allowing shorter stays tend to perform better financially.
+
+
+## Business Recommendations Based on Minimum Stay Requirements & Revenue Analysis
+
+Hosts should lower their minimum night requirement to increase bookings and earnings.
+Hosts with long-term stays should offer competitive monthly discounts to attract guests.
+Identify tourist-heavy area, and allowing weekend and short stays will increase demand.
+Use Airbnb’s "Smart Pricing" tool to optimize rates for different stay lengths.
+Provide weekly or biweekly discounts to attract longer-term guests while keeping high occupancy.
+
+## Compare Prices in Popular vs. Non-Tourist Areas
+
+```{r}
+library(geosphere)
+
+# Example: Calculate distance to Times Square (NYC)
+times_square <- c(-73.9851, 40.7580)  # Longitude, Latitude
+
+airbnb_df <- airbnb_df %>%
+  mutate(distance_to_times_square = distHaversine(cbind(longitude, latitude), times_square))
+
+# Identify properties within 2km of Times Square
+tourist_listings <- airbnb_df %>%
+  filter(distance_to_times_square < 2000)
+tourist_listings
+```
+
 
