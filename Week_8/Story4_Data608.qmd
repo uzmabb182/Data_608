@@ -5,7 +5,12 @@ format: revealjs
 editor: visual
 ---
 
+### Step 1: Defining Business Question
 
+-   Task is to analyze NYC Airbnb listings, determine what drives revenue and occupancy, and present insights in a clear, data-driven slideshow.
+-   Where are the best investment opportunities? (Identify high-potential but undervalued listings.)
+-   How can underperforming hosts improve? (Identify common mistakes & provide actionable advice.)
+-   Why should new hosts list on Airbnb? (Highlight profitable areas & market demand.)
 
 ```{r, warning = FALSE, message = FALSE}
 # echo=FALSE, include=FALSE
@@ -34,6 +39,11 @@ nyc_geo <- st_read("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/he
 head(airbnb_df)
 
 ```
+Task to Create a Story:
+
+-   Where are the best investment opportunities? (Identify high-potential but undervalued listings.)
+
+## Exploratory Data Analysis:
 
 ```{r}
 # Quick summary
@@ -107,14 +117,6 @@ colnames(airbnb_df) # Check column names in airbnb_df
 
 ```
 
-### Step 1: Defining Business Question
-
-Task is to analyze NYC Airbnb listings, determine what drives revenue and occupancy, and present insights in a clear, data-driven slideshow.
-
-Where are the best investment opportunities? (Identify high-potential but undervalued listings.)
-How can underperforming hosts improve? (Identify common mistakes & provide actionable advice.)
-Why should new hosts list on Airbnb? (Highlight profitable areas & market demand.)
-
 ### Summarize airbnb_df to Aggregate Data by Neighborhood
 
 ```{r}
@@ -161,6 +163,7 @@ nyc_geo
 unique(airbnb_df$neighborhood)
 
 ```
+
 ```{r}
 # Since Airbnb has multiple listings per neighborhood, first calculate the average price per neighborhood
 
@@ -175,22 +178,85 @@ price_summary <- airbnb_df %>%
 price_summary
 ```
 
+## Data-Driven Story: Where Are the Best Airbnb Investment Opportunities in NYC?
+
+-   Identifying High-Potential but Undervalued Listings
+-   New York City’s Airbnb market is vast, but not all listings perform equally. 
+-   Some hosts struggle with low revenue, while others maximize profits. Where should I as an investors focus?
+-   This analysis uncovers neighborhoods with high demand but underpriced listings, offering the best investment opportunities.
+
 
 ## Airbnb Listings Density Map
 
 ```{r}
-# Map the Merged Data
-
-library(ggplot2)
-
-ggplot(nyc_geo) +
-  geom_sf(aes(fill = total_listings), color = "white") +
-  scale_fill_viridis_c(option = "plasma", na.value = "gray90") +
-  theme_minimal() +
-  labs(title = "Number of Airbnb Listings by NYC Neighborhood", fill = "Total Listings")
 
 
 ```
+
+
+```{r}
+# Load required libraries
+library(sf)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+
+nyc_geo <- nyc_geo %>%
+  rename(neighborhood = neighbourhood)  # Fix name if needed
+
+# Step 1: Count total listings per neighborhood
+listing_counts <- airbnb_df %>%
+  group_by(neighborhood) %>%
+  summarise(n = n(), .groups = "drop")  # Count number of listings per neighborhood
+
+# Step 2: Merge the listing counts with NYC geographic data
+nyc_map_data <- nyc_geo %>%
+  left_join(listing_counts, by = "neighborhood")
+
+# Step 3: Create a ggplot map with hover text
+p <- ggplot(nyc_map_data) +
+  geom_sf(aes(fill = n, 
+              text = paste0(
+                "Neighborhood: ", neighborhood, "<br>",
+                "Total Listings: ", n
+              )
+  ), color = "white", size = 0.2) +
+  scale_fill_viridis_c(option = "plasma", name = "Total Listings") +
+  labs(
+    title = "Number of Airbnb Listings by NYC Neighborhood"
+  ) +
+  theme_minimal()
+
+# Step 4: Convert ggplot to interactive plotly map
+interactive_map <- ggplotly(p, tooltip = "text")
+
+# View the interactive map
+interactive_map
+
+
+```
+
+Interpretation:
+
+Concentration of Listings
+
+The yellow and orange areas represent neighborhoods with the highest number of Airbnb listings (1000-2000+).
+The dark blue areas indicate fewer listings, suggesting less Airbnb activity in those neighborhoods.
+High-Density Airbnb Areas
+
+The highest concentration of listings appears in parts of Manhattan and Brooklyn, especially around Midtown Manhattan and Williamsburg.
+These areas are prime Airbnb hotspots, likely due to strong demand from tourists and business travelers.
+Low-Density Airbnb Areas
+
+Many parts of Staten Island, the Bronx, and Queens have significantly fewer listings.
+These areas may have lower tourist demand or stricter short-term rental regulations.
+Business Implications & Investment Insights
+
+High-Listing Neighborhoods → Indicate strong demand, but competition is high. 
+Hosts should differentiate by offering premium amenities and unique experiences.
+Low-Listing Neighborhoods → May present opportunities for growth if demand exists but supply is limited. 
+Potential for targeting budget travelers and longer stays.
+Staten Island & the Bronx → Investors should assess whether Airbnb restrictions or low tourism impact listing growth in these areas.
 
 ## Average Rent per Night by Neighbourhood Group
 
@@ -221,11 +287,256 @@ ggplot(avg_price_per_group, aes(x = reorder(neighbourhood_group, -avg_price), y 
 
 
 ```
+Interpretation:
+
+Bronx, Queens, and Staten Island offer the lowest average nightly rates – ideal for budget-conscious travelers.
+
 Business Suggestions:
 
 Some Neighbourhood Groups Have Significantly Higher Prices: highlight premium amenities to justify the price
 Lower-Priced Neighbourhoods May Attract Budget Travelers: Hosts should focus on volume (more bookings) and offering discounts for longer stays.
 Low-priced areas: Improve listing quality (better photos, amenities) to compete with premium areas.
+
+## Proving: "Highlight Premium Amenities to Justify the Price" with Data
+
+-   To support this claim, we need to analyze:
+-   How amenities impact price – Do listings with premium amenities charge higher prices?
+-   Occupancy vs. amenities – Are premium listings getting booked frequently?
+
+## Evidence: Listings with More Premium Amenities Have Higher Prices
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Count number of amenities per listing
+airbnb_df <- airbnb_df %>%
+  mutate(num_amenities = str_count(amenities, ",") + 1)
+
+# Group by number of amenities and calculate average price
+amenities_price <- airbnb_df %>%
+  group_by(num_amenities) %>%
+  summarise(avg_price = mean(price, na.rm = TRUE)) 
+
+# Plot
+ggplot(amenities_price, aes(x = num_amenities, y = avg_price)) +
+  geom_point(color = "blue", size = 2) +
+  geom_smooth(method = "lm", color = "red") +
+  theme_minimal() +
+  labs(
+    title = "Impact of Amenities on Price",
+    x = "Number of Amenities",
+    y = "Average Price ($ per Night)"
+  )
+
+```
+Findings:
+Listings with more amenities tend to have higher average prices.
+Basic listings (few amenities) cost less compared to fully equipped ones.
+The positive trend suggests that hosts can charge a premium by offering more features.
+
+Evidence: High-Value Amenities Are Present in High-Priced Listings
+
+-   Visualizing Average Price for Listings with Premium Amenities
+
+```{r}
+# Define premium amenities
+premium_amenities <- c("Pool", "Gym", "Hot tub", "Elevator", "Doorman", "Parking")
+
+# Create binary columns for each premium amenity
+for (amenity in premium_amenities) {
+  airbnb_df[[amenity]] <- grepl(amenity, airbnb_df$amenities, ignore.case = TRUE)
+}
+
+# Calculate average price for listings with and without premium amenities
+amenities_price_comparison <- airbnb_df %>%
+  dplyr::select(all_of(premium_amenities), price) %>%
+  pivot_longer(cols = all_of(premium_amenities), names_to = "Amenity", values_to = "Has_Amenity") %>%
+  group_by(Amenity, Has_Amenity) %>%
+  summarise(avg_price = mean(price, na.rm = TRUE))
+
+# Plot
+ggplot(amenities_price_comparison, aes(x = Amenity, y = avg_price, fill = Has_Amenity)) +
+  geom_col(position = "dodge") +
+  theme_minimal() +
+  scale_fill_manual(values = c("gray", "blue")) +
+  labs(
+    title = "Impact of Premium Amenities on Price",
+    x = "Premium Amenity",
+    y = "Average Price ($ per Night)",
+    fill = "Has Amenity?"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+Key Insights:
+Listings with Premium Amenities Charge Higher Prices
+
+Gym, Pool, and Elevator significantly increase the price per night.
+Listings with a Gym or Pool have the highest average price (~$350/night).
+Properties with an Elevator also show a strong price increase.
+Some Amenities Have Less Impact on Price
+
+Doorman, Parking, and Hot Tub do not significantly raise prices.
+In some cases (Hot Tub), listings without the amenity have slightly higher prices, possibly due to other factors like location or luxury features.
+The Strongest Premium Factors
+
+Gym and Pool show the largest price difference between properties that have them and those that don’t.
+These amenities are likely seen as luxury features that justify a higher rental price.
+
+Business Suggestions:
+Highlight Premium Amenities in Listings
+
+Hosts with Gyms and Pools should actively promote these features in their listings to attract higher-paying guests.
+Invest in High-Impact Amenities
+
+If targeting high-end renters, adding a gym or pool can justify higher pricing.
+Elevators may be more attractive for guests staying in high-rise buildings.
+
+
+## Evidence: Premium Amenities Also Boost Occupancy
+
+Visualizing Occupancy Rate for Listings with Premium Amenities
+
+```{r}
+# Calculate average occupancy rate for listings with and without premium amenities
+amenities_occupancy <- airbnb_df %>%
+  dplyr::select(all_of(premium_amenities), occupancy) %>%
+  pivot_longer(cols = all_of(premium_amenities), names_to = "Amenity", values_to = "Has_Amenity") %>%
+  group_by(Amenity, Has_Amenity) %>%
+  summarise(avg_occupancy = mean(occupancy, na.rm = TRUE))
+
+# Plot
+ggplot(amenities_occupancy, aes(x = Amenity, y = avg_occupancy, fill = Has_Amenity)) +
+  geom_col(position = "dodge") +
+  theme_minimal() +
+  scale_fill_manual(values = c("gray", "blue")) +
+  labs(
+    title = "Impact of Premium Amenities on Occupancy Rate",
+    x = "Premium Amenity",
+    y = "Average Occupancy Rate (%)",
+    fill = "Has Amenity?"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+Key Observations:
+Elevator is the Only Amenity That Boosts Occupancy
+
+Listings with Elevators have a higher occupancy rate than those without.
+This may reflect demand from guests looking for accessibility or higher-floor apartments.
+Other Premium Amenities Reduce Occupancy
+
+Surprisingly, listings with Gyms, Pools, Parking, or Hot Tubs tend to have lower occupancy than listings without them.
+This suggests these features may raise prices but don’t necessarily attract more frequent bookings.
+Basic Listings May Be Booked More Often
+
+Listings without premium amenities tend to have higher occupancy rates, possibly because:
+They are more affordable.
+They appeal to budget travelers or short-term stays.
+Overpriced luxury listings may get booked less frequently.
+
+## Low-Priced Areas Have Decent Occupancy Rates
+
+-   Let’s check if these areas also have good occupancy, supporting the "volume strategy".
+
+
+```{r}
+# Create price categories
+airbnb_df <- airbnb_df %>%
+  mutate(price_category = case_when(
+    price <= 50 ~ "Very Low",
+    price <= 150 ~ "Low",
+    price <= 300 ~ "Medium",
+    price <= 600 ~ "High",
+    price > 600 ~ "Very High",
+    TRUE ~ NA_character_
+  ))
+
+# Remove NAs and summarize
+price_occ_summary <- airbnb_df %>%
+  filter(!is.na(price_category)) %>%
+  group_by(price_category) %>%
+  summarise(
+    avg_occupancy = mean(occupancy, na.rm = TRUE),
+    avg_revenue = mean(revenue, na.rm = TRUE)
+  )
+
+# Plot occupancy by price category
+ggplot(price_occ_summary, aes(x = price_category, y = avg_occupancy, fill = avg_revenue)) +
+  geom_col() +
+  theme_minimal() +
+  scale_fill_viridis_c() +
+  labs(
+    title = "Occupancy vs. Price Category",
+    x = "Price Category",
+    y = "Average Occupancy Rate",
+    fill = "Avg Revenue ($)"
+  )
+
+```
+Key Insights:
+Very Low-Priced Listings Have the Highest Occupancy
+
+These listings are booked most frequently, likely because they are affordable and attract budget-conscious travelers.
+However, their average revenue is the lowest (dark purple), due to low pricing despite high demand.
+
+Low and Medium-Priced Listings Also Perform Well
+
+High occupancy with slightly better revenue than the very low category.
+Ideal for hosts targeting volume-based strategies (frequent bookings, possibly longer stays).
+
+Very High-Priced Listings Have the Lowest Occupancy
+
+These listings are booked less frequently, likely due to being out of range for average guests.
+BUT they generate high average revenue (yellow color), meaning they make up for low volume with premium pricing.
+
+High-Priced Listings Balance Both
+
+Moderate-to-high occupancy and solid revenue — possibly best for stable income.
+
+## Encouraging Longer Stays via Discounts
+Listings with low nightly rates and low minimum night requirements are common in lower-priced areas.
+
+Let’s see this by neighborhood group:
+
+## Minimum Nights vs Price by Neighborhood Group
+
+```{r}
+# Average minimum nights and price by neighborhood group
+stay_summary <- airbnb_df %>%
+  group_by(neighbourhood_group) %>%
+  summarise(
+    avg_price = mean(price, na.rm = TRUE),
+    avg_min_stay = mean(minimum_nights, na.rm = TRUE)
+  )
+
+# Plot
+ggplot(stay_summary, aes(x = reorder(neighbourhood_group, avg_price))) +
+  geom_col(aes(y = avg_min_stay), fill = "skyblue", width = 0.6) +
+  geom_line(aes(y = avg_price / 2), group = 1, color = "red", size = 1.2) +
+  geom_point(aes(y = avg_price / 2), color = "red", size = 3) +
+  scale_y_continuous(
+    name = "Avg. Minimum Nights",
+    sec.axis = sec_axis(~.*2, name = "Avg. Price ($)")
+  ) +
+  theme_minimal() +
+  labs(
+    title = "Minimum Stay vs Price by Neighbourhood Group",
+    x = "Neighbourhood Group"
+  )
+
+```
+Key Insights:
+
+1. Minimum Night Requirements Are Similar Across Boroughs
+The average minimum stay requirement across all groups hovers around 25–30 nights, with little variation.
+This indicates many hosts comply with NYC’s regulations that enforce minimum stay limits (especially in multi-unit buildings).
+
+2. Price Varies Significantly by Area
+Manhattan has the highest average price per night (≈ $300), yet the same minimum stay requirement as other areas.
+Bronx and Staten Island have much lower prices (≈ $100–150), even though their minimum night requirements are similar.
+
 
 ## A heatmap of Airbnb revenue across NYC neighborhoods to highlight high- and low-performing areas.
 
@@ -383,10 +694,12 @@ Key Observations
 
 Listings in the "Excellent (4.5-5)" and "Good (4-4.5)" categories have higher median revenue compared to lower-rated properties.
 These properties also have a wider spread (higher variance) in revenue, meaning some highly rated listings earn significantly more.
+
  Lower-Rated Listings Generate Less Revenue
 
 "Very Poor (0-2)" and "Poor (2-3)" categories have the lowest median revenue, indicating guests avoid low-rated properties.
 These listings show lower variability, meaning even the best-performing ones in these categories don’t earn much.
+
  Many High-Rated Listings Have Outliers
 
 "Good (4-4.5)" and "Excellent (4.5-5)" categories have a large number of high-revenue outliers, showing that some well-rated listings earn exceptionally well.
@@ -404,66 +717,6 @@ Some low-rated listings still make money, possibly due to prime locations or uni
 Pricing strategy should align with rating trends—low-rated listings may need discounts to compete.
 
 
-## A bar chart displaying how minimum stay restrictions impact revenue.
-
-Strict minimum stay rules (e.g., 30+ nights) hurt revenue.
-Listings with flexible stay policies tend to earn more.
-
-```{r}
-
-library(ggplot2)
-library(dplyr)
-
-# Define bins for minimum nights required
-airbnb_df <- airbnb_df %>%
-  mutate(min_nights_category = case_when(
-    minimum_nights == 1 ~ "1 Night",
-    minimum_nights <= 3 ~ "2-3 Nights",
-    minimum_nights <= 7 ~ "4-7 Nights",
-    minimum_nights <= 29 ~ "8-29 Nights",
-    minimum_nights >= 30 ~ "30+ Nights"
-  ))
-
-# Filter out extreme values (e.g., 365+ nights) to improve readability
-filtered_data <- airbnb_df %>%
-  filter(minimum_nights <= 365, !is.na(revenue))  
-
-# Order the categories properly
-filtered_data$min_nights_category <- factor(filtered_data$min_nights_category, 
-                                            levels = c("1 Night", "2-3 Nights", 
-                                                       "4-7 Nights", "8-29 Nights", 
-                                                       "30+ Nights"))
-
-# Create improved boxplot
-ggplot(filtered_data, aes(x = min_nights_category, y = revenue, fill = min_nights_category)) +
-  geom_boxplot(outlier.shape = 1, outlier.color = "black") +  # Boxplot with outliers
-  scale_y_continuous(limits = c(0, quantile(filtered_data$revenue, 0.99, na.rm = TRUE))) +  # Remove extreme revenue outliers
-  scale_fill_viridis_d() +  # Improved color scheme
-  theme_minimal() +
-  labs(
-    title = "Impact of Minimum Stay Requirements on Revenue (Grouped)",
-    x = "Minimum Nights Required",
-    y = "Revenue ($ per Month)",
-    fill = "Minimum Nights Category"
-  ) +
-  theme(axis.text.x = element_text(angle = 30, hjust = 1))  # Rotate x-axis labels for better readability
-
-
-```
-Interpretation of the Boxplot: Minimum Stay vs. Revenue
-⃣ Shorter stays (1-7 nights) generate higher revenue.
-
-"1 Night" and "2-3 Nights" categories have higher median revenue than longer stays.
-"4-7 Nights" has the widest spread, suggesting some high-earning listings.
- Longer minimum stays (30+ nights) lead to lower revenue.
-
-The "30+ Nights" category has the lowest median revenue, likely due to fewer bookings.
-Some outliers (black dots) indicate a few long-term rentals still earn well.
- More flexible minimum stay policies attract higher revenue.
-
-Listings allowing shorter stays tend to perform better financially.
-
-
 ## Business Recommendations Based on Minimum Stay Requirements & Revenue Analysis
 
 Hosts should lower their minimum night requirement to increase bookings and earnings.
@@ -472,21 +725,67 @@ Identify tourist-heavy area, and allowing weekend and short stays will increase 
 Use Airbnb’s "Smart Pricing" tool to optimize rates for different stay lengths.
 Provide weekly or biweekly discounts to attract longer-term guests while keeping high occupancy.
 
-## Compare Prices in Popular vs. Non-Tourist Areas
+
+## Room Type & Pricing in Budget Areas
+
+-   Since budget travelers look for affordability, let’s compare room types in lower-priced areas (Bronx, Queens, Staten Island).
+-   Room Type Distribution in Lower-Priced Areas
 
 ```{r}
-library(geosphere)
+# Filter data for budget-friendly neighborhoods
+budget_areas <- c("Bronx", "Queens", "Staten Island")
 
-# Example: Calculate distance to Times Square (NYC)
-times_square <- c(-73.9851, 40.7580)  # Longitude, Latitude
+room_type_summary <- airbnb_df %>%
+  filter(neighbourhood_group %in% budget_areas) %>%
+  group_by(neighbourhood_group, room_type) %>%
+  summarise(avg_price = mean(price, na.rm = TRUE), count = n(), .groups = "drop")
 
-airbnb_df <- airbnb_df %>%
-  mutate(distance_to_times_square = distHaversine(cbind(longitude, latitude), times_square))
+# Plot
+ggplot(room_type_summary, aes(x = reorder(room_type, avg_price), y = avg_price, fill = neighbourhood_group)) +
+  geom_col(position = "dodge") +
+  theme_minimal() +
+  labs(
+    title = "Room Type Pricing in Budget-Friendly Areas",
+    x = "Room Type",
+    y = "Average Price ($ per Night)",
+    fill = "Neighbourhood Group"
+  ) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
 
-# Identify properties within 2km of Times Square
-tourist_listings <- airbnb_df %>%
-  filter(distance_to_times_square < 2000)
-tourist_listings
 ```
+ ## Insights:
 
+-   Private rooms are the most affordable in these areas, making them attractive for solo travelers & budget tourists.
+-   Entire homes cost more, so these listings may need longer stay discounts to remain competitive.
+
+## Superhost vs. Regular Host: Do They Charge More?
+
+-   Superhosts often have higher occupancy & pricing power. Let's compare pricing and revenue per night.
+-   Superhost vs. Regular Host Pricing & Revenue
+
+```{r}
+# Compare Superhosts vs Regular hosts
+superhost_summary <- airbnb_df %>%
+  group_by(host_is_superhost) %>%
+  summarise(
+    avg_price = mean(price, na.rm = TRUE),
+    avg_revenue = mean(revenue, na.rm = TRUE),
+    avg_occupancy = mean(occupancy, na.rm = TRUE),
+    count = n(),
+    .groups = "drop"
+  )
+
+# Plot
+ggplot(superhost_summary, aes(x = as.factor(host_is_superhost), y = avg_price, fill = as.factor(host_is_superhost))) +
+  geom_col() +
+  theme_minimal() +
+  labs(
+    title = "Superhost vs. Regular Hosts: Pricing & Revenue",
+    x = "Superhost Status",
+    y = "Average Price ($ per Night)",
+    fill = "Superhost"
+  ) +
+  theme(axis.text.x = element_text(angle = 30, hjust = 1))
+
+```
 
