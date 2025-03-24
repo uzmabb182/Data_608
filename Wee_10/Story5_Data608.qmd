@@ -1,0 +1,39 @@
+---
+title: "Story5_Data608"
+author: "Mubashira Qari"
+format: revealjs
+editor: visual
+date: 2025-3-24"
+---
+
+### Defining Business Question
+
+
+
+```{r, warning = FALSE, message = FALSE, echo = FALSE, include=FALSE}
+# echo=FALSE, include=FALSE
+
+library(knitr)
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(ggfortify)
+library(RColorBrewer)
+library(tidyr)
+library(ggplot2)
+library(dplyr)
+library(usmap)   # For U.S. map plotting
+library(sf)         # Spatial data
+library(geojsonsf)  # GeoJSON handling
+library(viridis) # For color scales
+
+
+# Loading Dataset
+
+airbnb_df <- read_csv("")
+nyc_geo <- st_read("")
+
+#head(airbnb_df)
+
+```
