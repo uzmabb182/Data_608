@@ -10,30 +10,193 @@ date: 2025-3-24"
 
 This week we will learn to visualize models, and the next week we will learn about dimensionality reduction techniques. A good dataset to practice these tools on is the Ames housing price dataset, which is a sort of "model organism" for machine learning practice. The emphasis of this assignment (described in the pdf) is on building a model or models of the factors determining housing prices and using visualizations to explain their meaning and implications.
 
-```{r, warning = FALSE, message = FALSE, echo = FALSE, include=FALSE}
+```{r, warning = FALSE, message = FALSE}
 # echo=FALSE, include=FALSE
 
-library(knitr)
+# Load required libraries
+
 library(tidyverse)
-library(readxl)
+library(caret)
 library(ggplot2)
-library(dplyr)
-library(ggfortify)
-library(RColorBrewer)
-library(tidyr)
-library(ggplot2)
-library(dplyr)
-library(usmap)   # For U.S. map plotting
-library(sf)         # Spatial data
-library(geojsonsf)  # GeoJSON handling
-library(viridis) # For color scales
-
-
+library(corrplot)
+library(GGally)
+library(randomForest)
+library(gridExtra)
+library(pscl)
+library(pROC)
+library(MASS)
+library(boot)
 # Loading Dataset
 
-airbnb_df <- read_csv("")
-nyc_geo <- st_read("")
+housing_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_10/train.csv")
 
-#head(airbnb_df)
+
+head(housing_df)
 
 ```
+
+### Exploratory Data Analysis:
+
+```{r}
+
+#glimpse(housing_df)
+
+#skim(housing_df)
+colnames(housing_df)
+```
+
+```{r}
+# 1. Histogram of Sale Prices
+ggplot(housing_df, aes(x = SalePrice)) +
+  geom_histogram(fill = "steelblue", bins = 50, color = "black") +
+  theme_minimal() +
+  labs(title = "Sale Price Distribution")
+```
+
+
+
+
+
+
+```{r}
+# top correlated variables with SalePrice
+
+# Compute correlations
+numeric_data <- housing_df %>% select_if(is.numeric)
+cor_matrix <- cor(numeric_data, use = "complete.obs")
+
+# Find top 15 features most correlated with SalePrice
+saleprice_corr <- abs(cor_matrix[, "SalePrice"])
+top_vars <- names(sort(saleprice_corr, decreasing = TRUE))[1:15]
+
+# Plot only top correlated features
+library(corrplot)
+corrplot::corrplot(cor_matrix[top_vars, top_vars],
+                   method = "color",       # colored tiles
+                   type = "upper",         # show only upper triangle
+                   tl.col = "black",       # label color
+                   tl.cex = 0.8,           # label size
+                   number.cex = 0.7)       # correlation number size
+
+
+
+```
+
+
+```{r}
+# 3. Feature Engineering
+housing_df <- housing_df %>%
+  mutate(
+    log_SalePrice = log(SalePrice),
+    TotalBath = FullBath + 0.5 * HalfBath + BsmtFullBath + 0.5 * BsmtHalfBath,
+    TotalPorch = OpenPorchSF + EnclosedPorch + `3SsnPorch` + ScreenPorch,
+    Age = YrSold - YearBuilt
+  )
+
+```
+
+
+```{r}
+# 4. Visual Exploratory Data Analysis
+top_features <- c("GrLivArea", "OverallQual", "GarageCars", "TotalBsmtSF", "YearBuilt")
+
+# Scatter plot: GrLivArea vs SalePrice
+ggplot(housing_df, aes(x = GrLivArea, y = SalePrice)) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Living Area vs Sale Price")
+
+# Pairwise plot of top features
+ggpairs(housing_df, columns = which(names(housing_df) %in% top_features))
+
+
+
+```
+
+```{r}
+# 5. Train/Test Split
+set.seed(123)
+split <- createDataPartition(housing_df$SalePrice, p = 0.8, list = FALSE)
+train_df <- housing_df[split, ]
+test_df  <- housing_df[-split, ]
+
+```
+
+
+
+```{r}
+# 6. Linear Regression Model
+model_lm <- lm(SalePrice ~ GrLivArea + OverallQual + GarageCars + TotalBsmtSF + YearBuilt, data = train_df)
+summary(model_lm)
+
+```
+```{r}
+# 7. Prepare Data for Random Forest
+prepare_rf_data <- function(df) {
+  df %>%
+    dplyr::select(where(is.numeric)) %>%
+    mutate(across(everything(), ~ ifelse(is.na(.), median(., na.rm = TRUE), .))) %>%
+    setNames(make.names(names(.)))  # Make variable names safe
+}
+
+rf_train <- prepare_rf_data(train_df)
+rf_test  <- prepare_rf_data(test_df)
+
+```
+
+
+
+```{r}
+# 8. Fit Random Forest Model
+model_rf <- randomForest(SalePrice ~ ., data = rf_train, importance = TRUE)
+
+
+# 9. Variable Importance: %IncMSE
+importance_df <- as.data.frame(importance(model_rf))
+importance_df$Variable <- rownames(importance_df)
+
+top_vars_mse <- importance_df %>% arrange(desc(`%IncMSE`)) %>% slice(1:20)
+
+ggplot(top_vars_mse, aes(x = reorder(Variable, `%IncMSE`), y = `%IncMSE`)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 20 Variable Importances (%IncMSE)", x = "Variable", y = "% Increase in MSE") +
+  theme_minimal(base_size = 14)
+
+```
+```{r}
+# 10. Variable Importance: IncNodePurity
+top_vars_purity <- importance_df %>% arrange(desc(IncNodePurity)) %>% slice(1:20)
+
+ggplot(top_vars_purity, aes(x = reorder(Variable, IncNodePurity), y = IncNodePurity)) +
+  geom_col(fill = "darkgreen") +
+  coord_flip() +
+  labs(title = "Top 20 Important Variables (IncNodePurity)", x = "Variable", y = "Node Purity") +
+  theme_minimal(base_size = 14)
+
+```
+```{r}
+# 11. Evaluate Models
+lm_preds <- predict(model_lm, newdata = test_df)
+rf_preds <- predict(model_rf, newdata = rf_test)
+
+rmse <- function(actual, predicted) sqrt(mean((actual - predicted)^2))
+
+cat("Linear Regression RMSE:", rmse(test_df$SalePrice, lm_preds), "\n")
+cat("Random Forest RMSE:", rmse(test_df$SalePrice, rf_preds), "\n")
+
+# 12. Save Cleaned Dataset
+write.csv(housing_df, "C:/Users/Uzma/Downloads/housing_df_cleaned.csv", row.names = FALSE)
+```
+
+1. Histogram:	Visualizes the distribution of housing sale prices to spot skewness or outliers.
+2. Correlation Analysis:	Finds top numerical features most correlated with SalePrice and plots them in a heatmap for insight.
+3. Feature Engineering:	Creates new variables: log-transformed price, total bathrooms, total porch area, and house age to enhance modeling.
+4. Visual EDA:	Shows relationships (e.g., living area vs. sale price) and correlations between important features using scatter and pair plots.
+5. Train/Test Split:	Splits the data into training (80%) and testing (20%) for unbiased model evaluation.
+6. Linear Model:	Trains a basic regression model with key features.
+7. Data Prep for RF:	Cleans numeric columns and imputes missing values with the median for Random Forest modeling.
+8. Fit Random Forest:	Trains a Random Forest model on the processed data.
+9-10. Feature Importance:	Plots the most important features as identified by Random Forest using two metrics: %IncMSE and IncNodePurity.
+11. Evaluation:	Compares model performance using RMSE (lower is better).
+12. Save Cleaned Data:	Outputs the cleaned/engineered dataset to a CSV for future use.
