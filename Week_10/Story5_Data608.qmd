@@ -8,7 +8,7 @@ date: 2025-3-24"
 
 ### Defining Business Question
 
-
+This week we will learn to visualize models, and the next week we will learn about dimensionality reduction techniques. A good dataset to practice these tools on is the Ames housing price dataset, which is a sort of "model organism" for machine learning practice. The emphasis of this assignment (described in the pdf) is on building a model or models of the factors determining housing prices and using visualizations to explain their meaning and implications.
 
 ```{r, warning = FALSE, message = FALSE, echo = FALSE, include=FALSE}
 # echo=FALSE, include=FALSE
