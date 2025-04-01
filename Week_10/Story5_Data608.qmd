@@ -45,6 +45,8 @@ head(housing_df)
 colnames(housing_df)
 ```
 
+1.  Histogram: Visualizes the distribution of housing sale prices to spot skewness or outliers.
+
 ```{r}
 # 1. Histogram of Sale Prices
 ggplot(housing_df, aes(x = SalePrice)) +
@@ -53,10 +55,7 @@ ggplot(housing_df, aes(x = SalePrice)) +
   labs(title = "Sale Price Distribution")
 ```
 
-
-
-
-
+2.  Correlation Analysis: Finds top numerical features most correlated with SalePrice and plots them in a heatmap for insight.
 
 ```{r}
 # top correlated variables with SalePrice
@@ -82,6 +81,7 @@ corrplot::corrplot(cor_matrix[top_vars, top_vars],
 
 ```
 
+3.  Feature Engineering: Creates new variables: log-transformed price, total bathrooms, total porch area, and house age to enhance modeling.
 
 ```{r}
 # 3. Feature Engineering
@@ -95,6 +95,7 @@ housing_df <- housing_df %>%
 
 ```
 
+4.  Visual EDA: Shows relationships (e.g., living area vs. sale price) and correlations between important features using scatter and pair plots.
 
 ```{r}
 # 4. Visual Exploratory Data Analysis
@@ -113,6 +114,8 @@ ggpairs(housing_df, columns = which(names(housing_df) %in% top_features))
 
 ```
 
+5.  Train/Test Split: Splits the data into training (80%) and testing (20%) for unbiased model evaluation.
+
 ```{r}
 # 5. Train/Test Split
 set.seed(123)
@@ -122,7 +125,7 @@ test_df  <- housing_df[-split, ]
 
 ```
 
-
+6.  Linear Model: Trains a basic regression model with key features.
 
 ```{r}
 # 6. Linear Regression Model
@@ -130,6 +133,9 @@ model_lm <- lm(SalePrice ~ GrLivArea + OverallQual + GarageCars + TotalBsmtSF + 
 summary(model_lm)
 
 ```
+
+7.  Data Prep for RF: Cleans numeric columns and imputes missing values with the median for Random Forest modeling.
+
 ```{r}
 # 7. Prepare Data for Random Forest
 prepare_rf_data <- function(df) {
@@ -144,14 +150,17 @@ rf_test  <- prepare_rf_data(test_df)
 
 ```
 
-
+8.  Fit Random Forest: Trains a Random Forest model on the processed data.
 
 ```{r}
 # 8. Fit Random Forest Model
 model_rf <- randomForest(SalePrice ~ ., data = rf_train, importance = TRUE)
+```
 
+9-10. Feature Importance: Plots the most important features as identified by Random Forest using two metrics: %IncMSE and IncNodePurity.
 
-# 9. Variable Importance: %IncMSE
+```{r}
+# 9. Variable Importance: Choose the importance metric (IncMSE is more reliable)
 importance_df <- as.data.frame(importance(model_rf))
 importance_df$Variable <- rownames(importance_df)
 
@@ -164,8 +173,25 @@ ggplot(top_vars_mse, aes(x = reorder(Variable, `%IncMSE`), y = `%IncMSE`)) +
   theme_minimal(base_size = 14)
 
 ```
+
+%IncMSE stands for “Percentage Increase in Mean Squared Error”.
+
+It’s a feature importance metric used in Random Forests, and it works like this:
+
+Random Forest builds multiple decision trees.
+
+For each tree, it calculates how accurate the model is on out-of-bag samples (a built-in cross-validation technique).
+
+Then, it randomly shuffles (permutes) one feature’s values and re-evaluates the model.
+
+If shuffling that feature causes a big increase in the model’s error, then it means that feature was very important for accurate predictions.
+
+The average percentage increase in MSE (after shuffling) is reported as %IncMSE
+
 ```{r}
-# 10. Variable Importance: IncNodePurity
+
+# 10. Variable Importance: Variable Importance Plot Using IncNodePurity
+
 top_vars_purity <- importance_df %>% arrange(desc(IncNodePurity)) %>% slice(1:20)
 
 ggplot(top_vars_purity, aes(x = reorder(Variable, IncNodePurity), y = IncNodePurity)) +
@@ -175,6 +201,23 @@ ggplot(top_vars_purity, aes(x = reorder(Variable, IncNodePurity), y = IncNodePur
   theme_minimal(base_size = 14)
 
 ```
+
+
+IncNodePurity stands for Increase in Node Purity.
+
+When building decision trees (which make up a Random Forest), the model splits data at various nodes using features that reduce prediction error.
+
+Node "purity" is a measure of how homogeneous the target variable is after a split.
+
+For regression problems (like housing prices), purity is measured by reducing the Residual Sum of Squares (RSS).
+
+Every time a feature is used to split the data, it reduces the model’s error.
+
+The total reduction in error (RSS) attributed to a feature across all trees is its IncNodePurity.
+
+11. Evaluation: Compares model performance using RMSE (lower is better).
+12. Save Cleaned Data: Outputs the cleaned/engineered dataset to a CSV for future use.
+
 ```{r}
 # 11. Evaluate Models
 lm_preds <- predict(model_lm, newdata = test_df)
@@ -189,14 +232,135 @@ cat("Random Forest RMSE:", rmse(test_df$SalePrice, rf_preds), "\n")
 write.csv(housing_df, "C:/Users/Uzma/Downloads/housing_df_cleaned.csv", row.names = FALSE)
 ```
 
-1. Histogram:	Visualizes the distribution of housing sale prices to spot skewness or outliers.
-2. Correlation Analysis:	Finds top numerical features most correlated with SalePrice and plots them in a heatmap for insight.
-3. Feature Engineering:	Creates new variables: log-transformed price, total bathrooms, total porch area, and house age to enhance modeling.
-4. Visual EDA:	Shows relationships (e.g., living area vs. sale price) and correlations between important features using scatter and pair plots.
-5. Train/Test Split:	Splits the data into training (80%) and testing (20%) for unbiased model evaluation.
-6. Linear Model:	Trains a basic regression model with key features.
-7. Data Prep for RF:	Cleans numeric columns and imputes missing values with the median for Random Forest modeling.
-8. Fit Random Forest:	Trains a Random Forest model on the processed data.
-9-10. Feature Importance:	Plots the most important features as identified by Random Forest using two metrics: %IncMSE and IncNodePurity.
-11. Evaluation:	Compares model performance using RMSE (lower is better).
-12. Save Cleaned Data:	Outputs the cleaned/engineered dataset to a CSV for future use.
+## Top Features Identified:
+
+From the earlier Random Forest model, important predictors (via %IncMSE and IncNodePurity) typically include:
+
+GrLivArea (Above ground living area)
+
+OverallQual (Overall material and finish quality)
+
+GarageCars (Garage capacity)
+
+TotalBsmtSF (Total basement area)
+
+YearBuilt (Year house was built)
+
+Age (Newly engineered: age of the house)
+
+TotalBath (Engineered: total bathrooms)
+
+Neighborhood (if included as categorical)
+
+log_SalePrice (for visualization of skewed prices)
+
+## key visualizations for these features and explaination
+
+1.  GrLivArea vs. SalePrice
+
+```{r}
+ggplot(housing_df, aes(x = GrLivArea, y = SalePrice)) +
+  geom_point(alpha = 0.4, color = "steelblue") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "Above Ground Living Area vs Sale Price",
+       x = "Above Ground Living Area (sq ft)",
+       y = "Sale Price") +
+  theme_minimal()
+
+```
+
+## Interpretation:
+
+There’s a clear positive linear relationship: larger homes generally cost more.
+
+Some potential outliers exist (very large homes at lower prices).
+
+2.  Overall Quality vs. SalePrice
+
+```{r}
+ggplot(housing_df, aes(x = factor(OverallQual), y = SalePrice)) +
+  geom_boxplot(fill = "lightblue") +
+  labs(title = "Overall Quality vs Sale Price",
+       x = "Overall Quality (1 = Poor, 10 = Excellent)",
+       y = "Sale Price") +
+  theme_minimal()
+
+```
+
+## Interpretation:
+
+Sale price rises sharply with better overall quality.
+
+A house rated 8 or above commands a premium price.
+
+The relationship is non-linear and very categorical-sensitive.
+
+## 3. Garage Capacity vs. SalePrice
+
+```{r}
+ggplot(housing_df, aes(x = factor(GarageCars), y = SalePrice)) +
+  geom_boxplot(fill = "lightgreen") +
+  labs(title = "Garage Capacity vs Sale Price",
+       x = "Number of Garage Cars",
+       y = "Sale Price") +
+  theme_minimal()
+
+```
+
+
+## Interpretation:
+
+Houses with 2+ car garages fetch significantly higher prices.
+
+Garage capacity is both a space and status factor for buyers.
+
+4.  Total Basement Area vs. SalePrice
+
+```{r}
+ggplot(housing_df, aes(x = TotalBsmtSF, y = SalePrice)) +
+  geom_point(alpha = 0.4, color = "darkorange") +
+  geom_smooth(method = "lm", se = FALSE, color = "red") +
+  labs(title = "Total Basement Area vs Sale Price",
+       x = "Total Basement Area (sq ft)",
+       y = "Sale Price") +
+  theme_minimal()
+
+```
+
+nterpretation: Larger basements correlate with higher prices.
+
+Relationship is positive but diminishing after 2000 sq ft.
+
+5.  House Age vs. SalePrice
+
+```{r}
+ggplot(housing_df, aes(x = Age, y = SalePrice)) +
+  geom_point(alpha = 0.3, color = "purple") +
+  geom_smooth(method = "loess", color = "red", se = FALSE) +
+  labs(title = "House Age vs Sale Price",
+       x = "House Age (Years)",
+       y = "Sale Price") +
+  theme_minimal()
+
+```
+
+Interpretation: Newer homes (lower age) are valued higher.
+
+There’s a non-linear drop-off: value decreases sharply for older homes up to \~30 years, then levels off.
+
+6.  Total Bathrooms vs. SalePrice
+
+```{r}
+ggplot(housing_df, aes(x = TotalBath, y = SalePrice)) +
+  geom_jitter(width = 0.2, alpha = 0.4, color = "brown") +
+  geom_smooth(method = "lm", color = "red", se = FALSE) +
+  labs(title = "Total Bathrooms vs Sale Price",
+       x = "Total Bathrooms (Full + 0.5 × Half)",
+       y = "Sale Price") +
+  theme_minimal()
+
+```
+
+Interpretation: More bathrooms = higher sale price, but effect plateaus after \~3.5.
+
+Suggests marginal benefit decreases for higher counts.
