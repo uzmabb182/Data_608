@@ -1,0 +1,34 @@
+---
+title: "Story6_Data608"
+format: revealjs
+editor: visual
+---
+
+## Defining Business Question
+
+
+```{r, warning = FALSE, message = FALSE, echo=FALSE, include=FALSE}
+# echo=FALSE, include=FALSE
+
+# Load required libraries
+
+library(tidyverse)
+library(caret)
+library(ggplot2)
+library(corrplot)
+library(GGally)
+library(randomForest)
+library(gridExtra)
+library(pscl)
+library(pROC)
+library(MASS)
+library(boot)
+library(Metrics)
+# Loading Dataset
+
+df <- read_csv(" ")
+
+
+colnames(df)
+
+```
