@@ -6,6 +6,7 @@ editor: visual
 
 ## Defining Business Question
 
+This assignment involves using dimensionality reduction, clustering, and other tools to tell a story about the types of customers at Instacart.
 
 ```{r, warning = FALSE, message = FALSE, echo=FALSE, include=FALSE}
 # echo=FALSE, include=FALSE
@@ -24,11 +25,218 @@ library(pROC)
 library(MASS)
 library(boot)
 library(Metrics)
+library(dplyr)
+library(Rtsne)
+library(cluster)
+library(tibble)     # for tibble conversions
+library(tidyr)      # for reshaping data (preferred over reshape2)
+library(forcats)    # for better category handling in plots
+library(tibble)
+
 # Loading Dataset
-
-df <- read_csv(" ")
-
-
-colnames(df)
+aisles_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_12/aisles.csv")
+all_order_products_df <- read_csv("C:/Users/Uzma/CUNY-SPS-Assignments/Data_608/Week_12/all_order_products.csv")
+departments_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_12/departments.csv")
+orders_df <- read_csv("C:/Users/Uzma/CUNY-SPS-Assignments/Data_608/Week_12/departments.csv")
+products_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_12/products.csv")
+user_features_df <- read_csv("https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_12/user_features.csv")
+head(user_features_df)
 
 ```
+
+## Reducing Customer Dimensions to Reveal Behavior Patterns
+
+```{r fig.width=10, fig.height=6}
+
+# Identify feature types
+all_cols <- colnames(user_features_df)
+day_cols <- all_cols[str_detect(all_cols, "^(Saturday|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday)$")]
+product_cols <- setdiff(all_cols, c("user_id", day_cols))
+
+features <- user_features_df %>% dplyr::select(all_of(product_cols))
+features_scaled <- scale(features)
+
+pca_result <- prcomp(features_scaled, center = TRUE, scale. = TRUE)
+
+pca_df <- data.frame(
+  PC1 = pca_result$x[, 1],
+  PC2 = pca_result$x[, 2]
+)
+
+# Plot with annotation
+ggplot(pca_df, aes(x = PC1, y = PC2)) +
+  geom_point(alpha = 0.6, color = "#2c7fb8") +
+
+  # Add annotation box
+  annotate("text", x = min(pca_df$PC1) + 10, y = max(pca_df$PC2) - 10,
+           label = "PCA reveals customer similarity:\nClose points = similar shopping habits",
+           size = 4, fontface = "italic", color = "black", hjust = 0) +
+
+  labs(
+    title = "Customer Behavior Patterns via PCA",
+    subtitle = "Each point represents a customer’s shopping behavior",
+    x = "Principal Component 1",
+    y = "Principal Component 2"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12)
+  )
+
+
+```
+
+## Clustering Users Based on Shopping Behavior
+
+```{r fig.width=10, fig.height=6}
+user_features_df <- as_tibble(user_features_df)
+# select product columns
+features <- user_features_df %>%
+  dplyr::select(-user_id, -Saturday, -Sunday, -Monday, -Tuesday, -Wednesday, -Thursday, -Friday)
+
+features_scaled <- scale(features)  # <- THIS is what we use in kmeans
+
+
+pca_result <- prcomp(features_scaled, center = TRUE, scale. = TRUE)
+pca_df <- data.frame(
+  PC1 = pca_result$x[, 1],
+  PC2 = pca_result$x[, 2]
+)
+
+set.seed(42)
+k_result <- kmeans(features_scaled, centers = 4)
+
+# Add cluster labels
+pca_df$cluster <- k_result$cluster
+
+# Replace numeric cluster IDs with meaningful labels
+cluster_labels <- c(
+  "1" = "Cluster 1: Mixed Shoppers",
+  "2" = "Cluster 2: Health-Focused",
+  "3" = "Cluster 3: Snack/Convenience",
+  "4" = "Cluster 4: Niche/Low Activity"
+)
+
+# Add descriptive labels to a new column
+pca_df$cluster_label <- factor(cluster_labels[as.character(pca_df$cluster)],
+                               levels = cluster_labels)  # keeps legend order
+
+# Plot with legend
+ggplot(pca_df, aes(x = PC1, y = PC2, color = cluster_label)) +
+  geom_point(alpha = 0.8, size = 1.8) +
+  labs(
+    title = "Customer Segments Identified by Clustering",
+    subtitle = "K-Means identified 4 major customer types",
+    x = "PC1", y = "PC2",
+    color = "Customer Cluster"
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12),
+    legend.position = "right",
+    legend.title = element_text(face = "bold"),
+    legend.text = element_text(size = 10)
+  ) +
+  scale_color_manual(values = c(
+    "Cluster 1: Mixed Shoppers" = "#e41a1c",
+    "Cluster 2: Health-Focused" = "#4daf4a",
+    "Cluster 3: Snack/Convenience" = "#377eb8",
+    "Cluster 4: Niche/Low Activity" = "#984ea3"
+  ))
+
+
+
+```
+## What Each Cluster Buys (Top Product Categories)
+
+```{r}
+# Add cluster back to user features
+clustered_users <- user_features_df %>%
+  mutate(cluster = k_result$cluster) %>%
+  dplyr::select(cluster, all_of(product_cols))
+
+# Convert to long format
+long_cluster_data <- clustered_users %>%
+  pivot_longer(cols = -cluster, names_to = "category", values_to = "count") %>%
+  group_by(cluster, category) %>%
+  summarise(avg = mean(count), .groups = "drop")
+
+# Top 10 categories overall
+top_cats <- long_cluster_data %>%
+  group_by(category) %>%
+  summarise(total_avg = sum(avg)) %>%
+  slice_max(total_avg, n = 10) %>%
+  pull(category)
+
+# Filter to top categories
+filtered_plot_data <- long_cluster_data %>%
+  filter(category %in% top_cats)
+
+# Plot
+ggplot(filtered_plot_data, aes(x = avg, y = fct_reorder(category, avg), fill = factor(cluster))) +
+  geom_col(position = "dodge") +
+  labs(
+    title = "Top Product Categories by Cluster",
+    subtitle = "Average items purchased per user, across top 10 categories",
+    x = "Avg Items", y = "Product Category", fill = "Cluster"
+  ) +
+  theme_minimal(base_size = 13) +
+  scale_fill_manual(values = c("#e41a1c", "#4daf4a", "#377eb8", "#984ea3"))
+
+```
+## Shopping Behavior Over Weekdays (Dynamic Day Columns)
+
+```{r}
+# Recode cluster labels for legend clarity
+cluster_labels <- c(
+  "1" = "Cluster 1: Mixed Shoppers",
+  "2" = "Cluster 2: Health-Focused (Midweek)",
+  "3" = "Cluster 3: Weekend Snackers",
+  "4" = "Cluster 4: Low-Activity Users"
+)
+
+# Prepare long-format data with dynamic days
+day_cols <- grep("^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday)$",
+                 colnames(user_features_df), value = TRUE)
+
+long_days <- user_features_df %>%
+  mutate(cluster = k_result$cluster) %>%
+  dplyr::select(cluster, all_of(day_cols)) %>%
+  pivot_longer(cols = all_of(day_cols), names_to = "day", values_to = "count") %>%
+  group_by(cluster, day) %>%
+  summarise(avg_items = mean(count), .groups = "drop") %>%
+  mutate(
+    cluster = factor(cluster_labels[as.character(cluster)],
+                     levels = cluster_labels),
+    day = factor(day, levels = c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"))
+  )
+
+# Plot with annotated legend
+ggplot(long_days, aes(x = day, y = avg_items, color = cluster, group = cluster)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  labs(
+    title = "Weekly Shopping Pattern by Cluster",
+    subtitle = "Shopping habits vary in timing across customer types",
+    x = "Day of Week", y = "Avg Items Purchased",
+    color = "Customer Type"
+  ) +
+  scale_color_manual(values = c(
+    "Cluster 1: Mixed Shoppers" = "#e41a1c",
+    "Cluster 2: Health-Focused (Midweek)" = "#4daf4a",
+    "Cluster 3: Weekend Snackers" = "#377eb8",
+    "Cluster 4: Low-Activity Users" = "#984ea3"
+  )) +
+  theme_minimal(base_size = 13) +
+  theme(
+    legend.title = element_text(face = "bold"),
+    plot.title = element_text(face = "bold", size = 16),
+    plot.subtitle = element_text(size = 12),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+
+```
+
