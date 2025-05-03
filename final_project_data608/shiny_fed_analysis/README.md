@@ -1,4 +1,4 @@
-#  FED Mandate Analysis Dashboard (Shiny App)
+##  FED Mandate Analysis Dashboard (Shiny App)
 
 This interactive R Shiny app analyzes whether the **Federal Reserve (FED)** has successfully met its dual mandate:
 - Maintain **low inflation**
@@ -8,7 +8,7 @@ Users can explore historical trends, customize thresholds, and view how inflatio
 
 ---
 
-## 🔧 Features
+##  Features
 
 -  **Time Series Visualizations** for:
   - Fed Funds Rate
@@ -43,7 +43,7 @@ Users can explore historical trends, customize thresholds, and view how inflatio
 - [RStudio](https://posit.co/download/rstudio-desktop/)
 - R packages: `shiny`, `tidyverse`, `lubridate`, `plotly`, `shinydashboard`, `DT`, `reshape`
 
-# FED Mandate Analysis Dashboard
+#  FED Mandate Analysis Dashboard
 
 ...
 
@@ -52,7 +52,7 @@ Users can explore historical trends, customize thresholds, and view how inflatio
 - `app.R` — Full Shiny application code
 - `README.md` — This file
 
-## 📊 Data Sources
+##  Data Sources
 
 All datasets are pulled live from public GitHub links:
 - [Unemployment Data](https://raw.githubusercontent.com/uzmabb182/Data_608/refs/heads/main/Week_2/unemployment_rate.csv)
